@@ -3,17 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Status // Live Telemetry</title>
     
+    <title>Govind SR | Live Server Metrics</title>
+    <meta name="description" content="Real-time public server dashboard monitoring CPU, RAM, Thermal zones, Storage, and PM2 processes.">
+    
+    <meta property="og:title" content="Govind SR | Live Server Metrics">
+    <meta property="og:description" content="Real-time public server dashboard monitoring CPU, RAM, Thermal zones, Storage, and PM2 processes.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://info.govindsr.me">
+    <meta property="og:image" content="https://govindsr.me/default-og-image.png"> 
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Govind SR | Live Server Metrics">
+    <meta name="twitter:description" content="Real-time public server dashboard monitoring CPU, RAM, Thermal zones, Storage, and PM2 processes.">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Reenie+Beanie&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Reenie+Beanie&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --primary-black: #0d0d0d;
             --primary-green: #00C853;
-            --primary-red: #D32F2F;
+            --alert-red: #D32F2F;
             --primary-amber: #FF9800;
             --bg-color: #f8f9fa;
             --card-bg: #ffffff;
@@ -29,42 +41,38 @@
             font-family: var(--font-main);
             color: var(--primary-black);
             display: flex;
-            flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
-            padding: clamp(1rem, 4vw, 3rem);
+            padding: clamp(1rem, 5vw, 4rem);
         }
 
-        .container {
+        /* Central Wrapper for 4K Scaling */
+        .dashboard-wrapper {
             width: 100%;
-            max-width: 1300px;
+            max-width: 1600px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
         /* Header & Live Indicator */
-        header {
-            text-align: center;
-            margin-bottom: 2.5rem;
+        header { 
+            text-align: center; 
+            margin-bottom: 2rem; 
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.75rem;
+            gap: 1rem;
         }
-
+        
         h1 {
-            font-size: clamp(2rem, 5vw, 3.5rem);
-            font-weight: 900;
-            letter-spacing: -1.5px;
-            text-transform: uppercase;
-        }
-
-        .host-badge {
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            color: #666;
-            margin-top: -0.25rem;
+            font-size: clamp(1.8rem, 4.5vw, 3.4rem);
+            letter-spacing: -1px;
+            font-family: var(--font-cursive);
+            font-weight: 400;
+            font-style: normal;
+            line-height: 1.1;
         }
 
         .status-badge {
@@ -73,24 +81,25 @@
             gap: 8px;
             font-family: var(--font-mono);
             font-size: 0.9rem;
-            font-weight: 700;
+            font-weight: bold;
             background: var(--primary-black);
             color: white;
-            padding: 8px 18px;
-            border-radius: 50px;
-            border: 2px solid var(--primary-black);
+            padding: 8px 20px;
+            border-radius: 0px; /* Sharp authentic brutalism */
+            border: 3px solid var(--primary-black);
             box-shadow: 4px 4px 0px var(--primary-green);
-            transition: box-shadow 0.3s ease, transform 0.2s ease;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
         }
 
-        .status-badge:hover {
-            transform: translate(-1px, -1px);
+        .status-badge:hover { 
+            transform: translate(-2px, -2px); 
             box-shadow: 6px 6px 0px var(--primary-green);
         }
 
         .dot {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             background-color: var(--primary-green);
             border-radius: 50%;
             animation: pulse 1.5s infinite;
@@ -98,126 +107,196 @@
 
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 200, 83, 0); }
+            70% { box-shadow: 0 0 0 12px rgba(0, 200, 83, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
+        }
+
+        /* MASSIVE HERO CLOCK */
+        .hero-clock-container {
+            text-align: center;
+            margin-bottom: 3.5rem;
+            width: 100%;
+        }
+
+        .hero-clock {
+            font-family: var(--font-mono);
+            font-size: clamp(3.2rem, 12vw, 9.5rem); 
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -2px;
+            color: var(--primary-black);
+            text-shadow: 6px 6px 0px var(--primary-green);
+            transition: text-shadow 0.3s ease;
+        }
+
+        .hero-clock:hover {
+            text-shadow: 8px 8px 0px var(--alert-red);
+            cursor: default;
+        }
+
+        .hero-date {
+            font-family: var(--font-mono);
+            font-size: clamp(1rem, 2vw, 1.8rem);
+            font-weight: bold;
+            opacity: 0.85;
+            margin-top: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         /* Grid Layout */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: clamp(1.5rem, 2.5vw, 2.5rem);
             width: 100%;
             margin-bottom: 2.5rem;
         }
 
-        /* Neo-Brutalist Card Styles */
+        /* Card Styles */
         .card {
             background: var(--card-bg);
-            border: 3px solid var(--primary-black);
-            border-radius: 12px;
-            padding: 1.75rem;
-            box-shadow: 6px 6px 0px var(--primary-black);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            position: relative;
-            overflow: hidden;
+            border: 4px solid var(--primary-black);
+            border-radius: 0px; /* Sharper corners for true brutalism */
+            padding: clamp(1.5rem, 2.5vw, 2.2rem);
+            box-shadow: 8px 8px 0px var(--primary-black);
+            transition: all 0.2s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
         }
 
         .card:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 8px 8px 0px var(--primary-green);
+            transform: translate(-3px, -3px);
+            box-shadow: 11px 11px 0px var(--primary-green);
         }
 
         .card.temp-card:hover {
-            box-shadow: 8px 8px 0px var(--primary-red);
+            box-shadow: 11px 11px 0px var(--alert-red);
         }
 
         .card h2 {
-            font-size: 1rem;
+            font-size: clamp(1rem, 1.8vw, 1.3rem);
             font-family: var(--font-mono);
-            font-weight: 700;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            border-bottom: 3px solid var(--primary-black);
+            padding-bottom: 0.6rem;
+            font-weight: 800;
         }
 
-        .card h2 span.tag {
-            background: #eee;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            border: 1px solid var(--primary-black);
+        .card h2 span {
+            color: #666;
+            font-size: 0.85em;
         }
 
         .value-display {
-            font-size: 2.75rem;
+            font-size: clamp(2.8rem, 4.5vw, 4.2rem);
             font-weight: 900;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.8rem;
             letter-spacing: -2px;
+            font-family: var(--font-mono);
             line-height: 1;
         }
 
-        .sub-info {
+        .detail-text {
             font-family: var(--font-mono);
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #555;
-            margin-top: 0.5rem;
+            font-size: clamp(0.8rem, 1.3vw, 0.95rem);
+            font-weight: bold;
+            margin-top: 1.2rem;
+            background: var(--primary-black);
+            color: white;
+            padding: 8px 12px;
+            border: 2px solid var(--primary-black);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             display: flex;
             justify-content: space-between;
         }
 
-        /* Fluid Progress Bars */
+        /* Fluid Progress Bars with Animated Stripes */
         .bar-container {
             width: 100%;
-            height: 20px;
-            background-color: #e5e5e5;
-            border: 2px solid var(--primary-black);
-            border-radius: 50px;
+            height: clamp(22px, 2.5vw, 32px);
+            background-color: white;
+            border: 3px solid var(--primary-black);
             overflow: hidden;
-            margin-top: 0.5rem;
+            position: relative;
         }
 
         .bar-fill {
             height: 100%;
             background-color: var(--primary-green);
             width: 0%;
-            transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.4s ease;
-            border-right: 2px solid var(--primary-black);
+            transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s ease;
+            border-right: 3px solid var(--primary-black);
+            position: relative;
+            
+            /* Animated brutalist stripes */
+            background-image: linear-gradient(
+                45deg, 
+                rgba(255,255,255,0.2) 25%, 
+                transparent 25%, 
+                transparent 50%, 
+                rgba(255,255,255,0.2) 50%, 
+                rgba(255,255,255,0.2) 75%, 
+                transparent 75%, 
+                transparent
+            );
+            background-size: 1rem 1rem;
+            animation: moveStripes 1s linear infinite;
+        }
+
+        @keyframes moveStripes {
+            0% { background-position: 0 0; }
+            100% { background-position: 1rem 0; }
         }
 
         .bar-fill.temp {
-            background-color: var(--primary-red);
+            background-color: var(--primary-green);
+        }
+
+        .bar-fill.temp.warn {
+            background-color: var(--primary-amber);
+        }
+
+        .bar-fill.temp.alert {
+            background-color: var(--alert-red);
         }
 
         .bar-fill.disk {
             background-color: #2979FF;
         }
 
-        #time-val {
+        /* Data list styling for Sys Info */
+        .sys-list {
+            list-style: none;
             font-family: var(--font-mono);
-            font-size: 2.2rem;
-            letter-spacing: -1px;
+            font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+            line-height: 2.1;
+        }
+        .sys-list span:first-child { 
+            color: var(--primary-green); 
+            font-weight: 900; 
+            display: inline-block;
+            width: 90px;
         }
 
         /* --------------------------------------------------------- */
-        /* PM2 PROCESS HEALTH SECTION                                */
+        /* PM2 PROCESS HEALTH SECTION (AUTHENTIC NEO-BRUTALIST)      */
         /* --------------------------------------------------------- */
-        .section-container {
+        .pm2-section {
             width: 100%;
             background: var(--card-bg);
-            border: 3px solid var(--primary-black);
-            border-radius: 12px;
+            border: 4px solid var(--primary-black);
+            border-radius: 0px;
             box-shadow: 8px 8px 0px var(--primary-black);
-            padding: 2rem;
-            margin-bottom: 2rem;
+            padding: clamp(1.5rem, 3vw, 2.5rem);
+            margin-bottom: 2.5rem;
         }
 
-        .section-header {
+        .pm2-header {
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
@@ -225,100 +304,104 @@
             gap: 1rem;
             margin-bottom: 1.5rem;
             padding-bottom: 1rem;
-            border-bottom: 2px dashed #ddd;
+            border-bottom: 3px solid var(--primary-black);
         }
 
-        .section-title {
-            font-size: 1.3rem;
+        .pm2-title {
+            font-size: clamp(1.2rem, 2.2vw, 1.6rem);
             font-family: var(--font-mono);
-            font-weight: 800;
+            font-weight: 900;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
+            text-transform: uppercase;
         }
 
         .summary-pills {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 0.6rem;
         }
 
         .pill {
             font-family: var(--font-mono);
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 4px 10px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            padding: 5px 12px;
             border: 2px solid var(--primary-black);
-            border-radius: 50px;
+            border-radius: 0px;
             background: #fff;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            box-shadow: 2px 2px 0px var(--primary-black);
         }
 
         .pill.online { background: #E8F5E9; border-color: var(--primary-green); color: #1B5E20; }
-        .pill.stopped { background: #ECEFF1; border-color: #78909C; color: #37474F; }
-        .pill.errored { background: #FFEBEE; border-color: var(--primary-red); color: #B71C1C; }
+        .pill.stopped { background: #ECEFF1; border-color: #607D8B; color: #37474F; }
+        .pill.errored { background: #FFEBEE; border-color: var(--alert-red); color: #B71C1C; }
 
-        /* Scannable Compact Table */
-        .table-wrapper {
+        /* Compact Scannable Table */
+        .table-responsive {
             width: 100%;
             overflow-x: auto;
         }
 
-        table.process-table {
+        table.pm2-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
             font-family: var(--font-mono);
-            font-size: 0.9rem;
+            font-size: clamp(0.8rem, 1.2vw, 0.92rem);
         }
 
-        table.process-table th {
+        table.pm2-table th {
             text-align: left;
-            padding: 10px 14px;
+            padding: 12px 14px;
             background: #f1f3f5;
-            border-top: 2px solid var(--primary-black);
-            border-bottom: 2px solid var(--primary-black);
-            font-weight: 800;
+            border-top: 3px solid var(--primary-black);
+            border-bottom: 3px solid var(--primary-black);
+            font-weight: 900;
             font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        table.process-table th:first-child { border-left: 2px solid var(--primary-black); }
-        table.process-table th:last-child { border-right: 2px solid var(--primary-black); }
+        table.pm2-table th:first-child { border-left: 3px solid var(--primary-black); }
+        table.pm2-table th:last-child { border-right: 3px solid var(--primary-black); }
 
-        table.process-table td {
-            padding: 12px 14px;
-            border-bottom: 1px solid #e0e0e0;
+        table.pm2-table td {
+            padding: 14px 14px;
+            border-bottom: 2px solid #e0e0e0;
             vertical-align: middle;
         }
 
-        table.process-table tr:hover td {
-            background-color: #fafbfc;
+        table.pm2-table tr:hover td {
+            background-color: #f7f9fa;
             cursor: pointer;
         }
 
         .status-dot-inline {
             display: inline-block;
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             margin-right: 6px;
+            vertical-align: middle;
         }
 
-        .status-dot-inline.online { background-color: var(--primary-green); box-shadow: 0 0 6px rgba(0, 200, 83, 0.6); }
+        .status-dot-inline.online { background-color: var(--primary-green); box-shadow: 0 0 6px rgba(0, 200, 83, 0.8); }
         .status-dot-inline.stopped { background-color: #9e9e9e; }
-        .status-dot-inline.errored { background-color: var(--primary-red); }
+        .status-dot-inline.errored { background-color: var(--alert-red); }
 
         .badge-restart {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            border: 1px solid #ccc;
+            padding: 3px 8px;
+            border-radius: 0px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            border: 2px solid #bbb;
             background: #f5f5f5;
+            display: inline-block;
         }
 
         .badge-restart.warn {
@@ -329,33 +412,35 @@
 
         .badge-restart.alert {
             background: #FFEBEE;
-            border: 2px solid var(--primary-red);
-            color: var(--primary-red);
+            border: 2px solid var(--alert-red);
+            color: var(--alert-red);
             animation: pulse-red 2s infinite;
         }
 
         @keyframes pulse-red {
             0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50% { transform: scale(1.06); }
             100% { transform: scale(1); }
         }
 
         .btn-inspect {
             background: white;
             border: 2px solid var(--primary-black);
-            padding: 4px 10px;
+            padding: 6px 12px;
             font-family: var(--font-mono);
             font-size: 0.75rem;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
-            box-shadow: 2px 2px 0px var(--primary-black);
+            box-shadow: 3px 3px 0px var(--primary-black);
             transition: all 0.1s ease;
+            text-transform: uppercase;
         }
 
         .btn-inspect:hover {
             transform: translate(-1px, -1px);
-            box-shadow: 3px 3px 0px var(--primary-black);
-            background: #f0f0f0;
+            box-shadow: 4px 4px 0px var(--primary-black);
+            background: var(--primary-green);
+            color: white;
         }
 
         .btn-inspect:active {
@@ -364,7 +449,7 @@
         }
 
         /* --------------------------------------------------------- */
-        /* NEO-BRUTALIST DETAIL MODAL                                */
+        /* NEO-BRUTALIST DETAIL MODAL (SHARP 0PX GEOMETRY)          */
         /* --------------------------------------------------------- */
         .modal-overlay {
             position: fixed;
@@ -372,13 +457,13 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(13, 13, 13, 0.5);
+            background: rgba(13, 13, 13, 0.65);
             backdrop-filter: blur(2px);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            padding: 1rem;
+            padding: 1.5rem;
         }
 
         .modal-overlay.active {
@@ -387,18 +472,18 @@
 
         .modal-box {
             background: white;
-            border: 3px solid var(--primary-black);
-            border-radius: 12px;
+            border: 4px solid var(--primary-black);
+            border-radius: 0px;
             box-shadow: 12px 12px 0px var(--primary-black);
             width: 100%;
-            max-width: 580px;
-            padding: 2rem;
+            max-width: 620px;
+            padding: clamp(1.5rem, 3vw, 2.5rem);
             position: relative;
             animation: popIn 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
 
         @keyframes popIn {
-            0% { transform: scale(0.95); opacity: 0; }
+            0% { transform: scale(0.96); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
 
@@ -408,32 +493,34 @@
             align-items: flex-start;
             margin-bottom: 1.5rem;
             padding-bottom: 1rem;
-            border-bottom: 2px solid var(--primary-black);
+            border-bottom: 3px solid var(--primary-black);
         }
 
         .modal-title {
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-family: var(--font-mono);
-            font-weight: 800;
+            font-weight: 900;
+            word-break: break-all;
         }
 
         .modal-close-btn {
             background: white;
             border: 2px solid var(--primary-black);
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 900;
             cursor: pointer;
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 3px 3px 0px var(--primary-black);
             transition: all 0.1s ease;
+            margin-left: 1rem;
         }
 
         .modal-close-btn:hover {
-            background: var(--primary-red);
+            background: var(--alert-red);
             color: white;
             transform: translate(-1px, -1px);
             box-shadow: 4px 4px 0px var(--primary-black);
@@ -444,132 +531,168 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
             font-family: var(--font-mono);
-            font-size: 0.9rem;
         }
 
         .modal-item {
             background: #f8f9fa;
             border: 2px solid var(--primary-black);
-            border-radius: 6px;
-            padding: 0.75rem 1rem;
+            border-radius: 0px;
+            padding: 0.8rem 1rem;
         }
 
         .modal-item .label {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: #666;
             text-transform: uppercase;
-            font-weight: 700;
+            font-weight: 800;
             margin-bottom: 4px;
         }
 
         .modal-item .val {
-            font-weight: 800;
+            font-weight: 900;
             font-size: 1.05rem;
             word-break: break-all;
         }
 
         /* Standalone notice */
         .standalone-notice {
-            padding: 1.5rem;
-            border: 2px dashed #aaa;
-            border-radius: 8px;
+            padding: 2rem;
+            border: 3px dashed var(--primary-black);
+            border-radius: 0px;
             text-align: center;
             font-family: var(--font-mono);
-            color: #666;
-            font-size: 0.9rem;
+            color: #555;
+            font-size: 0.95rem;
+            font-weight: bold;
         }
 
-        footer {
-            margin-top: 1rem;
-            text-align: center;
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            opacity: 0.7;
+        /* Footer Return Link */
+        .footer-link {
+            font-family: var(--font-mono); 
+            font-weight: bold; 
+            margin-top: 3.5rem; 
+            opacity: 0.75; 
+            text-transform: uppercase;
+        }
+
+        .footer-link a {
+            color: var(--primary-black); 
+            text-decoration: none; 
+            border-bottom: 2px solid var(--primary-black); 
+            padding-bottom: 2px; 
+            transition: opacity 0.2s, background-color 0.2s;
+        }
+
+        .footer-link a:hover {
+            background-color: var(--primary-green);
+            opacity: 1;
+        }
+
+        @media (max-width: 600px) {
+            .modal-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="dashboard-wrapper">
         <header>
-            <h1 id="brand-title">SERVER_METRICS</h1>
-            <div class="host-badge" id="host-name">HOST: CONNECTING...</div>
-            <div class="status-badge" id="badge-container">
+            <div class="status-badge" id="badge-container" title="Click to reconnect">
                 <div class="dot" id="connection-dot"></div>
                 <span id="connection-text">CONNECTING...</span>
             </div>
+            <h1>PiCloud by Govind_SR // Metrics</h1>
         </header>
+
+        <!-- Massive Hero Clock -->
+        <div class="hero-clock-container">
+            <div class="hero-clock" id="time-val">00:00:00</div>
+            <div class="hero-date" id="date-val">SYS_UPTIME: --</div>
+        </div>
 
         <!-- System Core Cards Grid -->
         <div class="dashboard-grid">
-            <!-- 1. Uptime -->
+            
+            <!-- 1. CPU LOAD -->
             <div class="card">
-                <h2>// UPTIME_CLOCK <span class="tag">SYS</span></h2>
-                <div class="value-display" id="time-val">00:00:00</div>
-                <div class="sub-info">
-                    <span>UPTIME:</span>
-                    <span id="uptime-val">--</span>
+                <h2>// CPU_LOAD <span>[CORE]</span></h2>
+                <div>
+                    <div class="value-display"><span id="cpu-val">0.0</span>%</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" id="cpu-bar"></div>
+                    </div>
+                    <div class="detail-text">
+                        <span>LOAD AVG:</span>
+                        <span id="load-val">-- -- --</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- 2. CPU Load -->
+            <!-- 2. RAM USAGE -->
             <div class="card">
-                <h2>// CPU_LOAD <span class="tag" id="cpu-tag">CORE</span></h2>
-                <div class="value-display"><span id="cpu-val">0</span>%</div>
-                <div class="bar-container">
-                    <div class="bar-fill" id="cpu-bar"></div>
-                </div>
-                <div class="sub-info">
-                    <span>LOAD_AVG:</span>
-                    <span id="load-val">--</span>
+                <h2>// RAM_USAGE <span>[MEM]</span></h2>
+                <div>
+                    <div class="value-display"><span id="ram-val">0.0</span>%</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" id="ram-bar"></div>
+                    </div>
+                    <div class="detail-text">
+                        <span>AVAIL / TOTAL:</span>
+                        <span id="ram-details-val">-- / --</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- 3. RAM Usage -->
-            <div class="card">
-                <h2>// RAM_USAGE <span class="tag">MEM</span></h2>
-                <div class="value-display"><span id="ram-val">0</span>%</div>
-                <div class="bar-container">
-                    <div class="bar-fill" id="ram-bar"></div>
-                </div>
-                <div class="sub-info">
-                    <span>AVAIL / TOTAL:</span>
-                    <span id="ram-details-val">-- / --</span>
-                </div>
-            </div>
-
-            <!-- 4. Thermal -->
+            <!-- 3. THERMAL -->
             <div class="card temp-card">
-                <h2>// CPU_TEMP <span class="tag" id="sensor-tag">THERMAL</span></h2>
-                <div class="value-display"><span id="temp-val">--</span>°C</div>
-                <div class="bar-container">
-                    <div class="bar-fill temp" id="temp-bar"></div>
-                </div>
-                <div class="sub-info">
-                    <span>ZONE:</span>
-                    <span id="temp-sensor-val">AUTO</span>
+                <h2>// THERMAL <span id="sensor-tag">[ZONE0]</span></h2>
+                <div>
+                    <div class="value-display"><span id="temp-val">--</span>°C</div>
+                    <div class="bar-container">
+                        <div class="bar-fill temp" id="temp-bar"></div>
+                    </div>
+                    <div class="detail-text">
+                        <span>SENSOR:</span>
+                        <span id="temp-sensor-name">AUTO</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- 5. Disk Storage -->
+            <!-- 4. STORAGE DISK -->
             <div class="card">
-                <h2>// STORAGE_DISK <span class="tag">ROOT</span></h2>
-                <div class="value-display"><span id="disk-val">--</span>%</div>
-                <div class="bar-container">
-                    <div class="bar-fill disk" id="disk-bar"></div>
-                </div>
-                <div class="sub-info">
-                    <span>USED / TOTAL:</span>
-                    <span id="disk-details-val">-- / --</span>
+                <h2>// STORAGE_DISK <span>[ROOT]</span></h2>
+                <div>
+                    <div class="value-display"><span id="disk-val">--</span>%</div>
+                    <div class="bar-container">
+                        <div class="bar-fill disk" id="disk-bar"></div>
+                    </div>
+                    <div class="detail-text">
+                        <span>USED / TOTAL:</span>
+                        <span id="disk-details-val">-- / --</span>
+                    </div>
                 </div>
             </div>
+
+            <!-- 5. SYS INFO -->
+            <div class="card">
+                <h2>// SYS_INFO <span>[HOST]</span></h2>
+                <ul class="sys-list">
+                    <li><span>HOST:</span> <span id="host-val" style="color:var(--primary-black)">--</span></li>
+                    <li><span>OS:</span> <span id="os-val" style="color:var(--primary-black)">--</span></li>
+                    <li><span>ARCH:</span> <span id="arch-val" style="color:var(--primary-black)">--</span></li>
+                    <li><span>UPTIME:</span> <span id="uptime-val" style="color:var(--primary-black)">--</span></li>
+                </ul>
+            </div>
+
         </div>
 
         <!-- PM2 Process Health Section -->
-        <div class="section-container" id="pm2-section">
-            <div class="section-header">
-                <div class="section-title">
-                    <span>// PM2_PROCESS_HEALTH</span>
+        <div class="pm2-section" id="pm2-section">
+            <div class="pm2-header">
+                <div class="pm2-title">
+                    <span>// PM2_PROCESS_HEALTH [SERVICES]</span>
                 </div>
                 <div class="summary-pills" id="pm2-pills">
                     <span class="pill" id="pill-total">TOTAL: 0</span>
@@ -579,8 +702,8 @@
                 </div>
             </div>
 
-            <div class="table-wrapper" id="pm2-table-wrapper">
-                <table class="process-table">
+            <div class="table-responsive" id="pm2-table-wrapper">
+                <table class="pm2-table">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -595,7 +718,7 @@
                     </thead>
                     <tbody id="pm2-table-body">
                         <tr>
-                            <td colspan="8" style="text-align: center; color: #888; padding: 2rem;">
+                            <td colspan="8" style="text-align: center; color: #888; padding: 2.5rem;">
                                 Waiting for PM2 telemetry stream...
                             </td>
                         </tr>
@@ -605,15 +728,16 @@
 
             <div class="standalone-notice" id="pm2-standalone-notice" style="display: none;">
                 [PM2_MONITOR: STANDALONE MODE - NO PM2 DAEMON ACTIVE]
-                <div style="font-size: 0.8rem; margin-top: 4px; opacity: 0.8;">
-                    Hardware and system metrics are running with zero dependency on PM2.
+                <div style="font-size: 0.85rem; margin-top: 6px; opacity: 0.85;">
+                    Hardware and system metrics are operating with zero dependency on PM2.
                 </div>
             </div>
         </div>
 
-        <footer>
-            <span>SYSTEM_TELEMETRY // NEO_BRUTALIST_ENGINE // PICLOUD</span>
-        </footer>
+        <!-- Footer Link -->
+        <div class="footer-link">
+            <a href="https://govindsr.me" target="_blank">&lt; / Return to Govind_SR &gt;</a>
+        </div>
     </div>
 
     <!-- Neo-Brutalist Process Details Modal -->
@@ -623,7 +747,7 @@
                 <div class="modal-title" id="modal-process-title">// PROCESS_INFO</div>
                 <button class="modal-close-btn" id="modal-close" title="Close [ESC]">✕</button>
             </div>
-            <div class="modal-grid" id="modal-grid">
+            <div class="modal-grid">
                 <div class="modal-item">
                     <div class="label">Process Name</div>
                     <div class="val" id="m-name">--</div>
@@ -641,7 +765,7 @@
                     <div class="val" id="m-restarts">--</div>
                 </div>
                 <div class="modal-item">
-                    <div class="label">Memory (MB)</div>
+                    <div class="label">Memory Footprint</div>
                     <div class="val" id="m-ram">--</div>
                 </div>
                 <div class="modal-item">
@@ -662,32 +786,23 @@
 
     <script>
         // DOM Elements
-        const hostName = document.getElementById('host-name');
-        const cpuVal = document.getElementById('cpu-val');
-        const cpuBar = document.getElementById('cpu-bar');
-        const cpuTag = document.getElementById('cpu-tag');
-        const loadVal = document.getElementById('load-val');
-        
-        const ramVal = document.getElementById('ram-val');
-        const ramBar = document.getElementById('ram-bar');
-        const ramDetailsVal = document.getElementById('ram-details-val');
-        
-        const tempVal = document.getElementById('temp-val');
-        const tempBar = document.getElementById('temp-bar');
-        const tempSensorVal = document.getElementById('temp-sensor-val');
-        
-        const diskVal = document.getElementById('disk-val');
-        const diskBar = document.getElementById('disk-bar');
-        const diskDetailsVal = document.getElementById('disk-details-val');
+        const hostVal = document.getElementById('host-val');
+        const cpuVal = document.getElementById('cpu-val'), cpuBar = document.getElementById('cpu-bar'), loadVal = document.getElementById('load-val');
+        const ramVal = document.getElementById('ram-val'), ramBar = document.getElementById('ram-bar'), ramDetailsVal = document.getElementById('ram-details-val');
+        const tempVal = document.getElementById('temp-val'), tempBar = document.getElementById('temp-bar'), sensorTag = document.getElementById('sensor-tag'), tempSensorName = document.getElementById('temp-sensor-name');
+        const diskVal = document.getElementById('disk-val'), diskBar = document.getElementById('disk-bar'), diskDetailsVal = document.getElementById('disk-details-val');
         
         const timeVal = document.getElementById('time-val');
+        const dateVal = document.getElementById('date-val');
         const uptimeVal = document.getElementById('uptime-val');
+        const osVal = document.getElementById('os-val');
+        const archVal = document.getElementById('arch-val');
         
         const connText = document.getElementById('connection-text');
         const connDot = document.getElementById('connection-dot');
         const badgeContainer = document.getElementById('badge-container');
 
-        // PM2 DOM Elements
+        // PM2 Elements
         const pm2TableWrapper = document.getElementById('pm2-table-wrapper');
         const pm2TableBody = document.getElementById('pm2-table-body');
         const pm2StandaloneNotice = document.getElementById('pm2-standalone-notice');
@@ -696,7 +811,7 @@
         const pillStopped = document.getElementById('pill-stopped');
         const pillErrored = document.getElementById('pill-errored');
 
-        // Modal DOM Elements
+        // Modal Elements
         const processModal = document.getElementById('process-modal');
         const modalClose = document.getElementById('modal-close');
         const modalTitle = document.getElementById('modal-process-title');
@@ -709,7 +824,6 @@
         const mUptime = document.getElementById('m-uptime');
         const mMode = document.getElementById('m-mode');
 
-        // State Store
         let currentProcesses = [];
 
         // -------------------------------------------------------------
@@ -718,18 +832,11 @@
         function updateDashboard(data) {
             if (!data || typeof data !== 'object') return;
 
-            // 1. Host & Time
-            if (data.hostname) {
-                hostName.innerText = `HOST: ${data.hostname.toUpperCase()} // ${data.osDetails || ''}`;
-            }
-
+            // 1. Time (Hero Clock)
             if (data.time) {
                 const date = new Date(data.time);
                 timeVal.innerText = date.toLocaleTimeString('en-US', { hour12: false });
-            }
-
-            if (data.uptime) {
-                uptimeVal.innerText = data.uptime;
+                dateVal.innerText = date.toDateString();
             }
 
             // 2. CPU
@@ -747,42 +854,55 @@
                 ramBar.style.width = `${Math.min(100, Math.max(0, data.ram))}%`;
             }
             if (data.ramDetails) {
-                const used = data.ramDetails.usedMB ? `${(data.ramDetails.usedMB / 1024).toFixed(1)}GB` : '--';
+                const avail = data.ramDetails.availableMB ? `${(data.ramDetails.availableMB / 1024).toFixed(1)}GB` : '--';
                 const total = data.ramDetails.totalMB ? `${(data.ramDetails.totalMB / 1024).toFixed(1)}GB` : '--';
-                ramDetailsVal.innerText = `${used} / ${total}`;
+                ramDetailsVal.innerText = `${avail} / ${total}`;
             }
 
             // 4. Thermal
             if (data.temp !== null && data.temp !== undefined && data.temp !== 'null') {
-                const t = parseFloat(data.temp);
-                tempVal.innerText = isNaN(t) ? data.temp : t.toFixed(1);
-                const visualTemp = isNaN(t) ? 0 : Math.min(100, Math.max(0, t));
+                const tempNum = parseFloat(data.temp);
+                tempVal.innerText = isNaN(tempNum) ? data.temp : tempNum.toFixed(1);
+                const visualTemp = isNaN(tempNum) ? 0 : Math.min(100, Math.max(0, tempNum));
                 tempBar.style.width = `${visualTemp}%`;
-
-                if (t > 75) {
-                    tempBar.style.backgroundColor = 'var(--primary-red)';
-                } else if (t > 60) {
-                    tempBar.style.backgroundColor = 'var(--primary-amber)';
+                
+                tempBar.classList.remove('warn', 'alert');
+                if (tempNum > 75) {
+                    tempBar.classList.add('alert');
+                    tempVal.style.color = 'var(--alert-red)';
+                } else if (tempNum > 60) {
+                    tempBar.classList.add('warn');
+                    tempVal.style.color = 'var(--primary-amber)';
                 } else {
-                    tempBar.style.backgroundColor = 'var(--primary-green)';
+                    tempVal.style.color = 'var(--primary-black)';
                 }
             } else {
-                tempVal.innerText = "--";
+                tempVal.innerText = "N/A";
                 tempBar.style.width = "0%";
             }
 
             if (data.tempSensor) {
-                tempSensorVal.innerText = data.tempSensor.toUpperCase();
+                sensorTag.innerText = `[${data.tempSensor.toUpperCase()}]`;
+                tempSensorName.innerText = data.tempSensor.toUpperCase();
             }
 
-            // 5. Disk
+            // 5. Storage Disk
             if (data.disk && typeof data.disk.usedPercent === 'number') {
                 diskVal.innerText = data.disk.usedPercent.toFixed(1);
                 diskBar.style.width = `${Math.min(100, Math.max(0, data.disk.usedPercent))}%`;
                 diskDetailsVal.innerText = `${data.disk.usedGB}G / ${data.disk.totalGB}G`;
             }
 
-            // 6. PM2 Section
+            // 6. Sys Info
+            if (data.hostname) hostVal.innerText = data.hostname;
+            if (data.osDetails) osVal.innerText = data.osDetails;
+            if (data.architecture) archVal.innerText = data.architecture;
+            if (data.uptime) {
+                uptimeVal.innerText = data.uptime;
+                dateVal.innerText = `SYS_UPTIME: ${data.uptime}`;
+            }
+
+            // 7. PM2 Section
             updatePm2Section(data.pm2);
         }
 
@@ -800,7 +920,6 @@
             pm2TableWrapper.style.display = 'block';
             pm2StandaloneNotice.style.display = 'none';
 
-            // Summary Pills
             const sum = pm2.summary || { total: 0, online: 0, stopped: 0, errored: 0 };
             pillTotal.innerText = `TOTAL: ${sum.total}`;
             pillOnline.innerText = `ONLINE: ${sum.online}`;
@@ -820,30 +939,28 @@
                 return;
             }
 
-            // Render Rows efficiently
             let rowsHtml = '';
             currentProcesses.forEach((p, idx) => {
-                const statusDotClass = p.status === 'online' ? 'online' : (p.status === 'errored' ? 'errored' : 'stopped');
+                const statusClass = p.status === 'online' ? 'online' : (p.status === 'errored' ? 'errored' : 'stopped');
                 
-                // Restarts alert coloring
-                let restartBadgeClass = 'badge-restart';
+                let restartClass = 'badge-restart';
                 let restartText = `${p.restarts || 0}`;
                 if (p.restarts > 10) {
-                    restartBadgeClass += ' alert';
+                    restartClass += ' alert';
                     restartText = `⚠ ${p.restarts}`;
                 } else if (p.restarts > 0) {
-                    restartBadgeClass += ' warn';
+                    restartClass += ' warn';
                 }
 
                 rowsHtml += `
                     <tr onclick="openProcessModal(${idx})">
                         <td style="font-weight: 700;">#${p.id !== null ? p.id : '-'}</td>
-                        <td style="font-weight: 800; color: var(--primary-black);">${escapeHtml(p.name)}</td>
+                        <td style="font-weight: 900; color: var(--primary-black);">${escapeHtml(p.name)}</td>
                         <td>
-                            <span class="status-dot-inline ${statusDotClass}"></span>
-                            <span style="font-weight: 700; text-transform: uppercase;">${escapeHtml(p.status)}</span>
+                            <span class="status-dot-inline ${statusClass}"></span>
+                            <span style="font-weight: 800; text-transform: uppercase;">${escapeHtml(p.status)}</span>
                         </td>
-                        <td><span class="${restartBadgeClass}">${restartText}</span></td>
+                        <td><span class="${restartClass}">${restartText}</span></td>
                         <td>${p.cpu !== undefined ? p.cpu + '%' : '--'}</td>
                         <td>${p.memoryMB !== undefined ? p.memoryMB + ' MB' : '--'}</td>
                         <td>${escapeHtml(p.uptime || '--')}</td>
@@ -864,14 +981,14 @@
             const proc = currentProcesses[index];
             if (!proc) return;
 
-            modalTitle.innerText = `// PROCESS_DETAILS: ${proc.name.toUpperCase()}`;
+            modalTitle.innerText = `// PROCESS: ${proc.name.toUpperCase()}`;
             mName.innerText = proc.name;
             mIds.innerText = `PM2 ID: #${proc.id} | PID: ${proc.pid || 'N/A'}`;
             mStatus.innerHTML = `<span class="status-dot-inline ${proc.status}"></span>${proc.status.toUpperCase()}`;
-            mStatus.style.color = proc.status === 'online' ? 'var(--primary-green)' : (proc.status === 'errored' ? 'var(--primary-red)' : '#666');
+            mStatus.style.color = proc.status === 'online' ? 'var(--primary-green)' : (proc.status === 'errored' ? 'var(--alert-red)' : '#666');
             
-            mRestarts.innerText = `${proc.restarts} ${proc.restartAlert ? ' (CRITICAL - EXCESSIVE RESTARTS)' : ''}`;
-            mRestarts.style.color = proc.restartAlert ? 'var(--primary-red)' : 'inherit';
+            mRestarts.innerText = `${proc.restarts} ${proc.restartAlert ? ' (ALERT: EXCESSIVE RESTARTS)' : ''}`;
+            mRestarts.style.color = proc.restartAlert ? 'var(--alert-red)' : 'inherit';
             
             mRam.innerText = `${proc.memoryMB} MB`;
             mCpu.innerText = `${proc.cpu}%`;
@@ -909,18 +1026,15 @@
         // SMART UNIVERSAL WEBSOCKET RESOLVER
         // -------------------------------------------------------------
         function resolveWebSocketUrl() {
-            // 1. Explicit query parameter ?ws=
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('ws')) {
                 return urlParams.get('ws');
             }
 
-            // 2. Cloudflare Pages or custom domain on govindsr.me
-            if (window.location.hostname.includes('govindsr.me')) {
+            if (window.location.hostname.includes('govindsr.me') || window.location.hostname.includes('pages.dev')) {
                 return 'wss://serverws.govindsr.me';
             }
 
-            // 3. Native host auto-resolution
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = window.location.hostname || 'localhost';
             return `${protocol}//${host}:3051`;
@@ -971,8 +1085,8 @@
 
             ws.onerror = (err) => {
                 connText.innerText = 'DISCONNECTED';
-                connDot.style.backgroundColor = 'var(--primary-red)';
-                badgeContainer.style.boxShadow = '4px 4px 0px var(--primary-red)';
+                connDot.style.backgroundColor = 'var(--alert-red)';
+                badgeContainer.style.boxShadow = '4px 4px 0px var(--alert-red)';
             };
 
             ws.onclose = () => {
@@ -990,6 +1104,11 @@
                 connectWebSocket();
             }, reconnectDelay);
         }
+
+        badgeContainer.addEventListener('click', () => {
+            console.log("Manual reconnect triggered.");
+            connectWebSocket();
+        });
 
         // Start Connection
         connectWebSocket();
