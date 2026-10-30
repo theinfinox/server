@@ -170,6 +170,41 @@
             box-shadow: 5px 5px 0px var(--primary-green);
         }
 
+        .lock-btn {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 800;
+            background: var(--card-bg);
+            color: var(--primary-black);
+            padding: 7px 16px;
+            border-radius: 0px;
+            border: 3px solid var(--border-color);
+            box-shadow: 3px 3px 0px var(--border-color);
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.15s, box-shadow 0.15s, color 0.15s, border-color 0.15s;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .lock-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 5px 5px 0px var(--primary-amber);
+            border-color: var(--primary-amber);
+        }
+
+        .lock-btn.unlocked {
+            color: var(--primary-green);
+            border-color: var(--primary-green);
+            box-shadow: 3px 3px 0px var(--primary-green);
+        }
+
+        .lock-btn.unlocked:hover {
+            box-shadow: 5px 5px 0px var(--primary-green);
+        }
+
         .dot {
             width: 10px;
             height: 10px;
@@ -755,6 +790,163 @@
             color: var(--primary-black);
         }
 
+        /* Access Portal Modal Styles */
+        .auth-modal-box {
+            max-width: 520px;
+        }
+
+        .auth-tier-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 800;
+            background: var(--bg-color);
+            color: var(--primary-black);
+            border: 2px solid var(--border-color);
+            padding: 6px 12px;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .auth-desc {
+            font-family: var(--font-mono);
+            font-size: 0.84rem;
+            line-height: 1.6;
+            color: var(--subtext-color);
+            margin-bottom: 1.2rem;
+        }
+
+        .auth-input-wrap {
+            display: flex;
+            border: 3px solid var(--border-color);
+            background: var(--card-bg);
+            margin-bottom: 0.8rem;
+            box-shadow: 3px 3px 0px var(--border-color);
+        }
+
+        .auth-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 14px;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--primary-black);
+            outline: none;
+            letter-spacing: 1px;
+        }
+
+        .auth-vis-btn {
+            background: var(--detail-bg);
+            color: var(--detail-text);
+            border: none;
+            border-left: 2px solid var(--border-color);
+            padding: 0 14px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .auth-options {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+
+        .auth-remember-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+            font-weight: 700;
+            color: var(--primary-black);
+        }
+
+        .auth-msg {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            font-weight: 800;
+            padding: 8px 12px;
+            border: 2px solid transparent;
+            margin-bottom: 1rem;
+            display: none;
+            text-transform: uppercase;
+        }
+
+        .auth-msg.error {
+            display: block;
+            background: rgba(211, 47, 47, 0.15);
+            color: var(--alert-red);
+            border-color: var(--alert-red);
+            animation: shake 0.2s ease-in-out;
+        }
+
+        .auth-msg.success {
+            display: block;
+            background: rgba(0, 200, 83, 0.15);
+            color: var(--primary-green);
+            border-color: var(--primary-green);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .btn-unlock-portal {
+            width: 100%;
+            background: var(--detail-bg);
+            color: var(--detail-text);
+            border: 3px solid var(--border-color);
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 0.92rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px var(--border-color);
+            transition: all 0.15s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-unlock-portal:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 6px 6px 0px var(--primary-green);
+            background: var(--primary-green);
+            color: white;
+            border-color: var(--primary-green);
+        }
+
+        .btn-lock-portal {
+            width: 100%;
+            background: var(--card-bg);
+            color: var(--alert-red);
+            border: 3px solid var(--alert-red);
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 0.92rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px var(--alert-red);
+            transition: all 0.15s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-lock-portal:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 6px 6px 0px var(--alert-red);
+            background: var(--alert-red);
+            color: white;
+        }
+
         .footer-link {
             text-align: center;
             margin-top: 1rem;
@@ -805,6 +997,7 @@
                     <div class="dot" id="connection-dot"></div>
                     <span id="connection-text">CONNECTING...</span>
                 </div>
+                <button class="lock-btn" id="lock-btn" title="Server Access Lock">[ 🔒 LOCKED ]</button>
                 <button class="theme-btn" id="theme-btn" title="Toggle Dark/Light Mode">DARK</button>
             </div>
             <h1>PiCloud by Govind_SR // Metrics</h1>
@@ -981,6 +1174,50 @@
         </div>
     </div>
 
+    <!-- Access Portal Modal (Zero-Trust Server Lock) -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-box auth-modal-box">
+            <div class="modal-header">
+                <div class="modal-title" id="auth-modal-title">// ACCESS_PORTAL // SERVER_LOCK</div>
+                <button class="modal-close-btn" id="auth-modal-close" title="Close [ESC]">✕</button>
+            </div>
+            <div class="auth-body" id="auth-form-container">
+                <div class="auth-tier-indicator" id="auth-tier-badge">
+                    <span class="status-dot-inline stopped" id="auth-tier-dot"></span>
+                    <span id="auth-tier-text">TIER: PUBLIC // MASKED</span>
+                </div>
+                <p class="auth-desc" id="auth-desc">
+                    Authenticate with the Server Access Key to unlock privileged system telemetry, kernel release details, raw hardware sensors, and private logs.
+                </p>
+                
+                <div id="auth-input-section">
+                    <div class="auth-input-wrap">
+                        <input type="password" id="auth-key-input" class="auth-input" placeholder="ENTER ACCESS KEY" autocomplete="current-password" maxlength="64" spellcheck="false">
+                        <button class="auth-vis-btn" id="auth-vis-btn" type="button">SHOW</button>
+                    </div>
+                    <div class="auth-options">
+                        <label class="auth-remember-label">
+                            <input type="checkbox" id="auth-remember-check" checked>
+                            <span>Remember this browser (30 Days)</span>
+                        </label>
+                    </div>
+                    <div class="auth-msg" id="auth-msg"></div>
+                    <button class="btn-unlock-portal" id="btn-unlock-portal">UNLOCK PORTAL [ENTER]</button>
+                </div>
+
+                <div id="auth-unlocked-section" style="display: none;">
+                    <div class="auth-msg success" style="display: block; margin-bottom: 1.2rem;">
+                        ✓ SESSION ACTIVE // PRIVILEGED ACCESS GRANTED
+                    </div>
+                    <p class="auth-desc" style="margin-bottom: 1.5rem;">
+                        This browser is authenticated. All unmasked system metrics, hardware sensor addresses, and private server logs are streaming.
+                    </p>
+                    <button class="btn-lock-portal" id="btn-lock-portal">LOCK DASHBOARD / LOGOUT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // -------------------------------------------------------------
         // THEME MANAGEMENT (DEFAULT: WHITE / LIGHT, REMEMBERS CHOICE)
@@ -1006,6 +1243,113 @@
         });
 
         initTheme();
+
+        // -------------------------------------------------------------
+        // ZERO-TRUST ACCESS PORTAL & LOCK MANAGEMENT
+        // -------------------------------------------------------------
+        const lockBtn = document.getElementById('lock-btn');
+        const authModal = document.getElementById('auth-modal');
+        const authModalClose = document.getElementById('auth-modal-close');
+        const authKeyInput = document.getElementById('auth-key-input');
+        const authVisBtn = document.getElementById('auth-vis-btn');
+        const authRememberCheck = document.getElementById('auth-remember-check');
+        const authMsg = document.getElementById('auth-msg');
+        const btnUnlockPortal = document.getElementById('btn-unlock-portal');
+        const btnLockPortal = document.getElementById('btn-lock-portal');
+        const authInputSection = document.getElementById('auth-input-section');
+        const authUnlockedSection = document.getElementById('auth-unlocked-section');
+        const authTierDot = document.getElementById('auth-tier-dot');
+        const authTierText = document.getElementById('auth-tier-text');
+
+        let isServerUnlocked = false;
+
+        function updateLockUI(unlocked) {
+            isServerUnlocked = unlocked;
+            if (unlocked) {
+                lockBtn.innerText = '[ 🔓 UNLOCKED ]';
+                lockBtn.classList.add('unlocked');
+                lockBtn.title = 'Access Portal Unlocked (Privileged Tier Active)';
+                authTierDot.className = 'status-dot-inline online';
+                authTierText.innerText = 'TIER: PRIVILEGED // UNLOCKED';
+                authInputSection.style.display = 'none';
+                authUnlockedSection.style.display = 'block';
+            } else {
+                lockBtn.innerText = '[ 🔒 LOCKED ]';
+                lockBtn.classList.remove('unlocked');
+                lockBtn.title = 'Server Access Lock (Click to Authenticate)';
+                authTierDot.className = 'status-dot-inline stopped';
+                authTierText.innerText = 'TIER: PUBLIC // MASKED';
+                authInputSection.style.display = 'block';
+                authUnlockedSection.style.display = 'none';
+                authMsg.style.display = 'none';
+                authKeyInput.value = '';
+            }
+        }
+
+        function openAuthModal() {
+            authModal.classList.add('active');
+            if (!isServerUnlocked) {
+                setTimeout(() => authKeyInput.focus(), 100);
+            }
+        }
+
+        function closeAuthModal() {
+            authModal.classList.remove('active');
+        }
+
+        lockBtn.addEventListener('click', openAuthModal);
+        authModalClose.addEventListener('click', closeAuthModal);
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) closeAuthModal();
+        });
+
+        authVisBtn.addEventListener('click', () => {
+            const isPass = authKeyInput.type === 'password';
+            authKeyInput.type = isPass ? 'text' : 'password';
+            authVisBtn.innerText = isPass ? 'HIDE' : 'SHOW';
+        });
+
+        function submitAuth() {
+            const key = authKeyInput.value.trim();
+            if (!key) {
+                authMsg.className = 'auth-msg error';
+                authMsg.innerText = 'PLEASE ENTER AN ACCESS KEY';
+                authMsg.style.display = 'block';
+                return;
+            }
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                authMsg.className = 'auth-msg error';
+                authMsg.innerText = 'NOT CONNECTED TO SERVER TELEMETRY';
+                authMsg.style.display = 'block';
+                return;
+            }
+
+            btnUnlockPortal.disabled = true;
+            btnUnlockPortal.innerText = 'VERIFYING KEY...';
+            authMsg.style.display = 'none';
+
+            const remember = authRememberCheck.checked;
+            ws.send(JSON.stringify({
+                type: 'auth',
+                key: key,
+                remember: remember
+            }));
+        }
+
+        btnUnlockPortal.addEventListener('click', submitAuth);
+        authKeyInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitAuth();
+        });
+
+        btnLockPortal.addEventListener('click', () => {
+            localStorage.removeItem('picloud_auth_token');
+            sessionStorage.removeItem('picloud_auth_token');
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'logout' }));
+            }
+            updateLockUI(false);
+            closeAuthModal();
+        });
 
         // -------------------------------------------------------------
         // DOM ELEMENTS
@@ -1388,7 +1732,7 @@
                 case 'temp':
                     modalTitle.innerText = `// THERMAL_ZONES`;
                     let thermalRows = '';
-                    if (Array.isArray(lastPayload.thermalDetails) && lastPayload.thermalDetails.length > 0) {
+                    if (lastPayload.authTier === 'privileged' && Array.isArray(lastPayload.thermalDetails) && lastPayload.thermalDetails.length > 0) {
                         thermalRows = lastPayload.thermalDetails.map(t => `
                             <div class="modal-item">
                                 <div class="label">${escapeHtml(t.type || t.zone || 'Thermal Sensor')}</div>
@@ -1398,8 +1742,14 @@
                     } else {
                         thermalRows = `
                             <div class="modal-item full-width">
-                                <div class="label">Primary Sensor</div>
-                                <div class="val">${lastPayload.temp}°C (${escapeHtml(lastPayload.tempType || 'AUTO')})</div>
+                                <div class="label">Primary Package Sensor</div>
+                                <div class="val">${lastPayload.temp}°C (${escapeHtml(lastPayload.tempType || 'CPU_PKG')})</div>
+                            </div>
+                            <div class="modal-item full-width" style="border-style: dashed; opacity: 0.9;">
+                                <div class="label">Hardware Sensor Buses</div>
+                                <div class="val" style="font-size: 0.85rem; color: var(--subtext-color);">
+                                    🔒 [LOCKED] Authenticate via Server Lock in header to inspect raw motherboard ACPI / Skylake sensor addresses.
+                                </div>
                             </div>
                         `;
                     }
@@ -1487,6 +1837,14 @@
                             <div class="label">System Continuous Uptime</div>
                             <div class="val" style="color: var(--primary-green);">${escapeHtml(lastPayload.uptime || '--')}</div>
                         </div>
+                        ${lastPayload.authTier !== 'privileged' ? `
+                            <div class="modal-item full-width" style="border-style: dashed; opacity: 0.9;">
+                                <div class="label">Privileged Tier Details</div>
+                                <div class="val" style="font-size: 0.85rem; color: var(--subtext-color);">
+                                    🔒 Exact Linux kernel release and local internal host identity are masked. Unlock portal to reveal.
+                                </div>
+                            </div>
+                        ` : ''}
                     `;
                     break;
             }
@@ -1511,8 +1869,9 @@
             if (e.target === processModal) closeModal();
         });
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && processModal.classList.contains('active')) {
-                closeModal();
+            if (e.key === 'Escape') {
+                if (processModal.classList.contains('active')) closeModal();
+                if (authModal.classList.contains('active')) closeAuthModal();
             }
         });
 
@@ -1580,11 +1939,66 @@
                     clearTimeout(reconnectTimeout);
                     reconnectTimeout = null;
                 }
+
+                // Auto-authenticate with remembered session token if available
+                const savedToken = localStorage.getItem('picloud_auth_token') || sessionStorage.getItem('picloud_auth_token');
+                if (savedToken) {
+                    ws.send(JSON.stringify({ type: 'auth_token', token: savedToken }));
+                }
             };
 
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
+                    
+                    // Auth Message Dispatcher
+                    if (data.type === 'auth_success') {
+                        btnUnlockPortal.disabled = false;
+                        btnUnlockPortal.innerText = 'UNLOCK PORTAL [ENTER]';
+                        if (data.remember) {
+                            localStorage.setItem('picloud_auth_token', data.token);
+                            sessionStorage.removeItem('picloud_auth_token');
+                        } else {
+                            sessionStorage.setItem('picloud_auth_token', data.token);
+                            localStorage.removeItem('picloud_auth_token');
+                        }
+                        updateLockUI(true);
+                        authMsg.className = 'auth-msg success';
+                        authMsg.innerText = '✓ ACCESS GRANTED // PRIVILEGED TIER ACTIVE';
+                        authMsg.style.display = 'block';
+                        setTimeout(closeAuthModal, 650);
+                        return;
+                    } else if (data.type === 'auth_error') {
+                        btnUnlockPortal.disabled = false;
+                        btnUnlockPortal.innerText = 'UNLOCK PORTAL [ENTER]';
+                        authMsg.className = 'auth-msg error';
+                        authMsg.innerText = data.error || 'ACCESS DENIED';
+                        authMsg.style.display = 'block';
+                        if (data.locked) {
+                            authKeyInput.disabled = true;
+                            btnUnlockPortal.disabled = true;
+                        }
+                        return;
+                    } else if (data.type === 'auth_token_success') {
+                        updateLockUI(true);
+                        return;
+                    } else if (data.type === 'auth_token_expired') {
+                        localStorage.removeItem('picloud_auth_token');
+                        sessionStorage.removeItem('picloud_auth_token');
+                        updateLockUI(false);
+                        return;
+                    } else if (data.type === 'logout_success') {
+                        updateLockUI(false);
+                        return;
+                    }
+
+                    // Telemetry Stream Packet
+                    if (data.authTier === 'privileged') {
+                        if (!isServerUnlocked) updateLockUI(true);
+                    } else if (data.authTier === 'public') {
+                        if (isServerUnlocked) updateLockUI(false);
+                    }
+
                     updateDashboard(data);
                 } catch (err) {
                     console.error('Error parsing telemetry payload:', err);

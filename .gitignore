@@ -125,3 +125,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Server Secret Lock (Never commit credentials)
+.auth-lock.json

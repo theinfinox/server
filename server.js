@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 let pm2 = null;
 try {
@@ -81,6 +82,125 @@ const wss = new WebSocket.Server({
 });
 
 console.log(`[Security] WebSocket Server running on ws://0.0.0.0:${PORT} with Origin whitelisting & DoS guard`);
+
+// -------------------------------------------------------------
+// ZERO-TRUST SERVER LOCK & CRYPTOGRAPHIC ACCESS GATE
+// -------------------------------------------------------------
+const AUTH_CONFIG_FILE = path.join(__dirname, '.auth-lock.json');
+const SERVER_BOOT_SECRET = crypto.randomBytes(32).toString('hex');
+const MAX_FAILED_ATTEMPTS = 3;
+const LOCKOUT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes cooldown
+
+let authConfig = null;
+const failedAttemptsMap = new Map(); // ip -> { count: number, lockedUntil: number, lastAttempt: number }
+
+function loadAuthConfig() {
+    try {
+        if (fs.existsSync(AUTH_CONFIG_FILE)) {
+            const raw = fs.readFileSync(AUTH_CONFIG_FILE, 'utf8');
+            const data = JSON.parse(raw);
+
+            // Option A: Automatically convert plaintext key to salted hash on boot
+            if (data && typeof data.key === 'string' && data.key.trim().length > 0) {
+                const salt = crypto.randomBytes(16).toString('hex');
+                const hash = crypto.createHmac('sha256', salt).update(data.key.trim()).digest('hex');
+                authConfig = {
+                    enabled: data.enabled !== false,
+                    salt: salt,
+                    hash: hash,
+                    updatedAt: new Date().toISOString()
+                };
+                fs.writeFileSync(AUTH_CONFIG_FILE, JSON.stringify({
+                    enabled: authConfig.enabled,
+                    salt: authConfig.salt,
+                    hash: authConfig.hash,
+                    updatedAt: authConfig.updatedAt
+                }, null, 2), 'utf8');
+                console.log('[Security] Plaintext key in .auth-lock.json converted to salted cryptographic hash.');
+                return authConfig;
+            }
+
+            if (data && data.salt && data.hash) {
+                authConfig = {
+                    enabled: data.enabled !== false,
+                    salt: data.salt,
+                    hash: data.hash
+                };
+                console.log('[Security] Zero-Trust Server Lock active (3 attempts / 30m cooldown enforced).');
+                return authConfig;
+            }
+        } else {
+            // Initial setup template for Option A
+            const defaultTemplate = {
+                enabled: true,
+                key: "admin1234!",
+                description: "Change 'key' to your custom password. On server start, it will be automatically converted to a salted hash and this plaintext key will be removed."
+            };
+            fs.writeFileSync(AUTH_CONFIG_FILE, JSON.stringify(defaultTemplate, null, 2), 'utf8');
+            console.log('[Security] Created template .auth-lock.json with default key.');
+            return loadAuthConfig();
+        }
+    } catch (e) {
+        console.error('[Security] Error loading .auth-lock.json:', e.message);
+    }
+    authConfig = { enabled: false };
+    return authConfig;
+}
+
+loadAuthConfig();
+
+// Periodic cleanup of expired rate limit entries
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, rec] of failedAttemptsMap.entries()) {
+        if (rec.lockedUntil && now > rec.lockedUntil) {
+            failedAttemptsMap.delete(ip);
+        } else if (!rec.lockedUntil && now - rec.lastAttempt > LOCKOUT_COOLDOWN_MS) {
+            failedAttemptsMap.delete(ip);
+        }
+    }
+}, 10 * 60 * 1000);
+
+function verifyKeyConstantTime(candidateKey) {
+    if (!authConfig || authConfig.enabled === false) return true;
+    if (!authConfig.salt || !authConfig.hash) return false;
+    if (typeof candidateKey !== 'string' || candidateKey.length < 1 || candidateKey.length > 128) return false;
+
+    const candidateHash = crypto.createHmac('sha256', authConfig.salt).update(candidateKey).digest('hex');
+    const expectedBuf = Buffer.from(authConfig.hash, 'hex');
+    const candidateBuf = Buffer.from(candidateHash, 'hex');
+
+    if (expectedBuf.length !== candidateBuf.length) return false;
+    return crypto.timingSafeEqual(expectedBuf, candidateBuf);
+}
+
+function createSessionToken() {
+    const payload = `${Date.now()}.${crypto.randomBytes(8).toString('hex')}`;
+    const sig = crypto.createHmac('sha256', SERVER_BOOT_SECRET).update(payload).digest('hex');
+    return `${payload}.${sig}`;
+}
+
+function verifySessionToken(token) {
+    if (typeof token !== 'string') return false;
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+
+    const [timestampStr, nonce, sig] = parts;
+    const timestamp = parseInt(timestampStr, 10);
+    if (isNaN(timestamp)) return false;
+
+    const MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days
+    if (Date.now() - timestamp > MAX_AGE) return false;
+
+    const payload = `${timestampStr}.${nonce}`;
+    const expectedSig = crypto.createHmac('sha256', SERVER_BOOT_SECRET).update(payload).digest('hex');
+
+    const sigBuf = Buffer.from(sig, 'hex');
+    const expectedBuf = Buffer.from(expectedSig, 'hex');
+
+    if (sigBuf.length !== expectedBuf.length) return false;
+    return crypto.timingSafeEqual(sigBuf, expectedBuf);
+}
 
 // -------------------------------------------------------------
 // 1. HARDWARE INFO CACHED AT STARTUP (ZERO TICK OVERHEAD)
@@ -597,7 +717,8 @@ setInterval(() => {
     const net = getNetworkMetrics();
     const thermalList = getAllThermalSensors();
 
-    const payload = {
+    // 3. Compose Sanitized Public Payload (Zero private leaks)
+    const publicPayload = {
         cpu: cpuPercentage,
         cpuModel: CPU_MODEL,
         cores: CPU_CORES,
@@ -607,12 +728,31 @@ setInterval(() => {
         tempType: tempObj.type,
         loadAvg: os.loadavg().map(load => load.toFixed(2)),
         uptime: formatUptime(os.uptime()),
-
-        // SECURITY MASKING: Generalized OS without exposing exact kernel CVE target
-        osDetails: os.type() === 'Linux' ? 'Linux' : `${os.type()}`,
+        osDetails: 'Linux', // MASKED
         architecture: os.arch(),
-        hostname: 'PiCloud',
+        hostname: 'PiCloud', // MASKED
+        ramDetails: {
+            totalMB: mem.totalMB,
+            usedMB: mem.usedMB,
+            availableMB: mem.availableMB
+        },
+        disk: disk,
+        network: net ? {
+            interface: net.interface,
+            rxFormatted: net.rxFormatted,
+            txFormatted: net.txFormatted,
+            totalRxFormatted: net.totalRxFormatted,
+            totalTxFormatted: net.totalTxFormatted
+        } : null,
+        pm2: pm2State,
+        authTier: 'public'
+    };
 
+    // 4. Compose Privileged Payload (Only sent to authenticated admin sockets)
+    const privilegedPayload = {
+        ...publicPayload,
+        osDetails: `${os.type()} ${os.release()} (${os.arch()})`, // UNMASKED
+        hostname: os.hostname(), // UNMASKED
         ramDetails: {
             totalMB: mem.totalMB,
             usedMB: mem.usedMB,
@@ -621,18 +761,23 @@ setInterval(() => {
             buffersMB: mem.buffersMB,
             cachedMB: mem.cachedMB
         },
-        disk: disk,
-        network: net,
-        thermalDetails: thermalList,
-        pm2: pm2State
+        thermalDetails: thermalList, // UNMASKED
+        network: net ? {
+            ...net,
+            rxPackets: net.rxPackets,
+            txPackets: net.txPackets
+        } : null,
+        authTier: 'privileged',
+        authVerified: true
     };
 
-    const message = JSON.stringify(payload);
+    const publicMsg = JSON.stringify(publicPayload);
+    const privilegedMsg = JSON.stringify(privilegedPayload);
 
-    // Broadcast to all active clients in one go
+    // Broadcast based strictly on client authentication state
     for (const client of wss.clients) {
         if (client.readyState === WebSocket.OPEN) {
-            client.send(message);
+            client.send(client.isAuthenticated ? privilegedMsg : publicMsg);
         }
     }
 }, 1000);
@@ -653,13 +798,92 @@ wss.on('close', () => {
     clearInterval(heartbeatInterval);
 });
 
-// Client connection listener
+// Client connection listener with Zero-Trust Authentication Engine
 wss.on('connection', (ws, req) => {
     ws.isAlive = true;
     ws.clientIp = getClientIp(req);
+    ws.isAuthenticated = false;
 
     ws.on('pong', () => {
         ws.isAlive = true;
+    });
+
+    ws.on('message', (rawData) => {
+        try {
+            if (rawData.length > 512) return; // Strict frame size cap prevents buffer flooding
+            const msg = JSON.parse(rawData.toString());
+            if (!msg || typeof msg !== 'object') return;
+
+            const now = Date.now();
+            const ipRecord = failedAttemptsMap.get(ws.clientIp);
+
+            // Action: Password Authentication Attempt
+            if (msg.type === 'auth') {
+                // Check if IP is currently locked out
+                if (ipRecord && ipRecord.lockedUntil && now < ipRecord.lockedUntil) {
+                    const remainingMin = Math.ceil((ipRecord.lockedUntil - now) / 60000);
+                    return ws.send(JSON.stringify({
+                        type: 'auth_error',
+                        error: `Access locked. 3 failed attempts reached. Try again in ${remainingMin} minute(s).`,
+                        locked: true,
+                        remainingMin: remainingMin
+                    }));
+                }
+
+                const isValid = verifyKeyConstantTime(msg.key);
+                if (isValid) {
+                    // Clear failed attempts upon successful login
+                    failedAttemptsMap.delete(ws.clientIp);
+                    ws.isAuthenticated = true;
+                    const sessionToken = createSessionToken();
+                    ws.send(JSON.stringify({
+                        type: 'auth_success',
+                        token: sessionToken,
+                        remember: !!msg.remember
+                    }));
+                    console.log(`[Security] Client ${ws.clientIp} elevated to Privileged Tier.`);
+                } else {
+                    // Record failure
+                    let rec = failedAttemptsMap.get(ws.clientIp) || { count: 0, lockedUntil: 0, lastAttempt: now };
+                    rec.count++;
+                    rec.lastAttempt = now;
+                    if (rec.count >= MAX_FAILED_ATTEMPTS) {
+                        rec.lockedUntil = now + LOCKOUT_COOLDOWN_MS;
+                        console.warn(`[Security] IP ${ws.clientIp} locked out for 30 minutes (3 failed attempts).`);
+                        return ws.send(JSON.stringify({
+                            type: 'auth_error',
+                            error: 'Access locked. 3 failed attempts reached. Cooldown active for 30 minutes.',
+                            locked: true,
+                            remainingMin: 30
+                        }));
+                    }
+                    failedAttemptsMap.set(ws.clientIp, rec);
+                    const attemptsLeft = MAX_FAILED_ATTEMPTS - rec.count;
+                    ws.send(JSON.stringify({
+                        type: 'auth_error',
+                        error: `Access Denied: Invalid Key (${attemptsLeft} attempt(s) remaining).`,
+                        attemptsLeft: attemptsLeft,
+                        locked: false
+                    }));
+                }
+            } else if (msg.type === 'auth_token') {
+                const isValidToken = verifySessionToken(msg.token);
+                if (isValidToken) {
+                    ws.isAuthenticated = true;
+                    ws.send(JSON.stringify({ type: 'auth_token_success' }));
+                    console.log(`[Security] Client ${ws.clientIp} restored Privileged Tier via valid session token.`);
+                } else {
+                    ws.isAuthenticated = false;
+                    ws.send(JSON.stringify({ type: 'auth_token_expired' }));
+                }
+            } else if (msg.type === 'logout') {
+                ws.isAuthenticated = false;
+                ws.send(JSON.stringify({ type: 'logout_success' }));
+                console.log(`[Security] Client ${ws.clientIp} logged out. Reverted to Public Tier.`);
+            }
+        } catch (e) {
+            // Drop malformed frame silently without crashing
+        }
     });
 
     ws.on('error', (err) => {
