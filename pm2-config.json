@@ -1,0 +1,34 @@
+{
+  "version": "1.0",
+  "description": "User-controlled visibility for PM2 process telemetry on the dashboard",
+  "processes": {
+    "Server-stats": {
+      "visible": false,
+      "note": "Host server process (hidden by default)"
+    },
+    "tracker-api": {
+      "visible": true
+    },
+    "SmartHealth": {
+      "visible": true
+    },
+    "certifybulk": {
+      "visible": true
+    },
+    "bms-tracker": {
+      "visible": true
+    },
+    "server": {
+      "visible": true
+    },
+    "tripnotifybackend": {
+      "visible": true
+    },
+    "attendance-pwa1": {
+      "visible": true
+    },
+    "bms-telegram": {
+      "visible": true
+    }
+  }
+}
