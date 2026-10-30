@@ -5,17 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>Govind SR | Live Server Metrics</title>
-    <meta name="description" content="Real-time public server dashboard monitoring CPU, RAM, Thermal zones, Storage, and PM2 processes.">
+    <meta name="description" content="Real-time public server dashboard monitoring CPU, RAM, Network throughput, and Thermal zones.">
     
     <meta property="og:title" content="Govind SR | Live Server Metrics">
-    <meta property="og:description" content="Real-time public server dashboard monitoring CPU, RAM, Thermal zones, Storage, and PM2 processes.">
+    <meta property="og:description" content="Real-time public server dashboard monitoring CPU, RAM, Network throughput, and Thermal zones.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://info.govindsr.me">
+    <meta property="og:url" content="https://serverws.govindsr.me">
     <meta property="og:image" content="https://govindsr.me/default-og-image.png"> 
     
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Govind SR | Live Server Metrics">
-    <meta name="twitter:description" content="Real-time public server dashboard monitoring CPU, RAM, Thermal zones, Storage, and PM2 processes.">
+    <meta name="twitter:description" content="Real-time public server dashboard monitoring CPU, RAM, Network throughput, and Thermal zones.">
+    <meta name="twitter:image" content="https://govindsr.me/default-og-image.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,11 +28,50 @@
             --primary-green: #00C853;
             --alert-red: #D32F2F;
             --primary-amber: #FF9800;
+            --primary-blue: #2979FF;
             --bg-color: #f8f9fa;
             --card-bg: #ffffff;
+            --badge-bg: #0d0d0d;
+            --badge-text: #ffffff;
+            --border-color: #0d0d0d;
+            --detail-bg: #0d0d0d;
+            --detail-text: #ffffff;
+            --subtext-color: #777777;
+            --bar-track: #ffffff;
+            --modal-bg: #ffffff;
+            --modal-overlay: rgba(13, 13, 13, 0.7);
+            --table-hover: #f1f3f5;
+            --table-header: #f8f9fa;
+            --stripe-color: rgba(255, 255, 255, 0.2);
+            --sparkline-stroke: #00C853;
+            --sparkline-fill: rgba(0, 200, 83, 0.12);
             --font-main: 'Inter', -apple-system, sans-serif;
             --font-mono: 'Space Mono', 'Courier New', monospace;
             --font-cursive: 'Reenie Beanie', cursive;
+        }
+
+        body.dark-mode {
+            --primary-black: #f0f2f5;
+            --primary-green: #00E676;
+            --alert-red: #FF5252;
+            --primary-amber: #FFB74D;
+            --primary-blue: #448AFF;
+            --bg-color: #0c0d0e;
+            --card-bg: #141517;
+            --badge-bg: #141517;
+            --badge-text: #f0f2f5;
+            --border-color: #f0f2f5;
+            --detail-bg: #1f2125;
+            --detail-text: #f0f2f5;
+            --subtext-color: #9aa0a6;
+            --bar-track: #1b1d21;
+            --modal-bg: #16181b;
+            --modal-overlay: rgba(0, 0, 0, 0.85);
+            --table-hover: #1e2025;
+            --table-header: #141517;
+            --stripe-color: rgba(255, 255, 255, 0.1);
+            --sparkline-stroke: #00E676;
+            --sparkline-fill: rgba(0, 230, 118, 0.15);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,12 +85,13 @@
             justify-content: center;
             min-height: 100vh;
             padding: clamp(0.75rem, 2vh, 1.8rem) clamp(0.75rem, 3vw, 2rem);
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
 
-        /* Proportional 16:9 & 9:16 Adaptive Shell */
+        /* Responsive Dashboard Container */
         .dashboard-wrapper {
             width: 100%;
-            max-width: 1440px;
+            max-width: 1560px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -59,13 +100,21 @@
         /* Header & Live Indicator */
         header { 
             text-align: center; 
-            margin-bottom: clamp(0.8rem, 1.8vh, 1.5rem); 
+            margin-bottom: clamp(0.8rem, 1.8vh, 1.4rem); 
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.6rem;
         }
         
+        .header-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         h1 {
             font-size: clamp(1.8rem, 3.8vw, 3rem);
             letter-spacing: -0.5px;
@@ -73,6 +122,7 @@
             font-weight: 400;
             font-style: normal;
             line-height: 1;
+            color: var(--primary-black);
         }
 
         .status-badge {
@@ -80,21 +130,42 @@
             align-items: center;
             gap: 8px;
             font-family: var(--font-mono);
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 700;
-            background: var(--primary-black);
-            color: white;
-            padding: 6px 16px;
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            padding: 6px 14px;
             border-radius: 0px;
-            border: 3px solid var(--primary-black);
+            border: 3px solid var(--border-color);
             box-shadow: 3px 3px 0px var(--primary-green);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.15s, box-shadow 0.15s;
             cursor: pointer;
             user-select: none;
         }
 
         .status-badge:hover { 
             transform: translate(-1px, -1px); 
+            box-shadow: 5px 5px 0px var(--primary-green);
+        }
+
+        .theme-btn {
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            font-weight: 800;
+            background: var(--card-bg);
+            color: var(--primary-black);
+            padding: 6px 14px;
+            border-radius: 0px;
+            border: 3px solid var(--border-color);
+            box-shadow: 3px 3px 0px var(--border-color);
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.15s, box-shadow 0.15s;
+            user-select: none;
+        }
+
+        .theme-btn:hover {
+            transform: translate(-1px, -1px);
             box-shadow: 5px 5px 0px var(--primary-green);
         }
 
@@ -112,10 +183,10 @@
             100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
         }
 
-        /* HERO CLOCK (CALIBRATED & JITTER-FREE) */
+        /* HERO CLOCK */
         .hero-clock-container {
             text-align: center;
-            margin-bottom: clamp(1rem, 2.2vh, 2rem);
+            margin-bottom: clamp(0.9rem, 2vh, 1.8rem);
             width: 100%;
         }
 
@@ -140,7 +211,7 @@
             font-family: var(--font-mono);
             font-size: clamp(0.85rem, 1.4vw, 1.15rem);
             font-weight: 700;
-            opacity: 0.8;
+            opacity: 0.85;
             margin-top: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -148,35 +219,58 @@
         }
 
         /* --------------------------------------------------------- */
-        /* 16:9 AT-A-GLANCE 5-CARD GRID                             */
+        /* RESPONSIVE 6-CARD GRID                                    */
         /* --------------------------------------------------------- */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: clamp(0.75rem, 1.5vw, 1.4rem);
+            gap: clamp(0.75rem, 1.4vw, 1.3rem);
             width: 100%;
             margin-bottom: clamp(1rem, 2vh, 1.6rem);
         }
 
-        /* On Desktop (16:9 viewports >= 1150px): All 5 cards in ONE single row */
-        @media (min-width: 1150px) {
+        /* Ultra-wide (>=1400px): Panoramic 6-card row */
+        @media (min-width: 1400px) {
             .dashboard-grid {
-                grid-template-columns: repeat(5, 1fr);
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        /* 950px - 1399px (Standard 1080p & Laptops): Perfect 3x2 grid */
+        @media (min-width: 950px) and (max-width: 1399px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* 650px - 949px (Tablets): 2x3 grid */
+        @media (min-width: 650px) and (max-width: 949px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* <650px (Mobile): Single column stack */
+        @media (max-width: 649px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
             }
         }
 
         /* Sharp Neo-Brutalist Cards */
         .card {
             background: var(--card-bg);
-            border: 3px solid var(--primary-black);
+            border: 3px solid var(--border-color);
             border-radius: 0px;
-            padding: clamp(1rem, 1.8vw, 1.4rem);
-            box-shadow: 5px 5px 0px var(--primary-black);
+            padding: clamp(0.9rem, 1.6vw, 1.3rem);
+            box-shadow: 5px 5px 0px var(--border-color);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 175px;
+            min-height: 180px;
+            cursor: pointer;
+            user-select: none;
         }
 
         .card:hover {
@@ -188,41 +282,109 @@
             box-shadow: 7px 7px 0px var(--alert-red);
         }
 
+        .card.net-card:hover {
+            box-shadow: 7px 7px 0px var(--primary-blue);
+        }
+
         .card h2 {
-            font-size: clamp(0.85rem, 1.1vw, 1rem);
+            font-size: clamp(0.82rem, 1.05vw, 0.95rem);
             font-family: var(--font-mono);
-            margin-bottom: 0.8rem;
+            margin-bottom: 0.6rem;
             display: flex;
             justify-content: space-between;
-            border-bottom: 2px solid var(--primary-black);
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
             padding-bottom: 0.4rem;
             font-weight: 800;
         }
 
         .card h2 span {
-            color: #777;
+            color: var(--subtext-color);
             font-size: 0.85em;
+            transition: color 0.15s ease;
+        }
+
+        .card:hover h2 span {
+            color: var(--primary-green);
         }
 
         .value-display {
-            font-size: clamp(2.2rem, 3.4vw, 3rem);
+            font-size: clamp(2rem, 3.2vw, 2.8rem);
             font-weight: 900;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.2rem;
             letter-spacing: -1.5px;
             font-family: var(--font-mono);
             line-height: 1;
             font-variant-numeric: tabular-nums;
+            color: var(--primary-black);
+        }
+
+        .value-display.net-display {
+            font-size: clamp(1.4rem, 2.2vw, 2rem);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .net-arrow-down { color: var(--primary-green); font-weight: 900; }
+        .net-arrow-up { color: var(--primary-blue); font-weight: 900; }
+
+        /* Embedded 22px Slim Micro-Sparkline */
+        .sparkline-box {
+            width: 100%;
+            height: 22px;
+            margin: 6px 0;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            background: transparent;
+        }
+
+        .sparkline-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            overflow: visible;
+        }
+
+        .sparkline-path {
+            fill: none;
+            stroke: var(--sparkline-stroke);
+            stroke-width: 2;
+            stroke-linejoin: round;
+            stroke-linecap: square;
+        }
+
+        .sparkline-path.temp {
+            stroke: var(--alert-red);
+        }
+
+        .sparkline-path.net {
+            stroke: var(--primary-blue);
+        }
+
+        .sparkline-fill {
+            fill: var(--sparkline-fill);
+        }
+
+        .sparkline-fill.temp {
+            fill: rgba(211, 47, 47, 0.12);
+        }
+
+        .sparkline-fill.net {
+            fill: rgba(41, 121, 255, 0.12);
         }
 
         .detail-text {
             font-family: var(--font-mono);
-            font-size: clamp(0.72rem, 0.95vw, 0.82rem);
+            font-size: clamp(0.7rem, 0.9vw, 0.8rem);
             font-weight: bold;
-            margin-top: 0.8rem;
-            background: var(--primary-black);
-            color: white;
-            padding: 6px 8px;
-            border: 2px solid var(--primary-black);
+            margin-top: 0.6rem;
+            background: var(--detail-bg);
+            color: var(--detail-text);
+            padding: 5px 8px;
+            border: 2px solid var(--border-color);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             display: flex;
@@ -233,9 +395,9 @@
         /* Fluid Progress Bars with Animated Stripes */
         .bar-container {
             width: 100%;
-            height: clamp(16px, 1.8vw, 22px);
-            background-color: white;
-            border: 2px solid var(--primary-black);
+            height: clamp(14px, 1.6vw, 18px);
+            background-color: var(--bar-track);
+            border: 2px solid var(--border-color);
             overflow: hidden;
             position: relative;
         }
@@ -245,16 +407,16 @@
             background-color: var(--primary-green);
             width: 0%;
             transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s ease;
-            border-right: 2px solid var(--primary-black);
+            border-right: 2px solid var(--border-color);
             position: relative;
             
             background-image: linear-gradient(
                 45deg, 
-                rgba(255,255,255,0.2) 25%, 
+                var(--stripe-color) 25%, 
                 transparent 25%, 
                 transparent 50%, 
-                rgba(255,255,255,0.2) 50%, 
-                rgba(255,255,255,0.2) 75%, 
+                var(--stripe-color) 50%, 
+                var(--stripe-color) 75%, 
                 transparent 75%, 
                 transparent
             );
@@ -270,21 +432,21 @@
         .bar-fill.temp { background-color: var(--primary-green); }
         .bar-fill.temp.warn { background-color: var(--primary-amber); }
         .bar-fill.temp.alert { background-color: var(--alert-red); }
-        .bar-fill.disk { background-color: #2979FF; }
+        .bar-fill.disk { background-color: var(--primary-blue); }
 
         /* Sys Info List */
         .sys-list {
             list-style: none;
             font-family: var(--font-mono);
-            font-size: clamp(0.78rem, 1vw, 0.88rem);
-            line-height: 1.8;
+            font-size: clamp(0.74rem, 0.95vw, 0.84rem);
+            line-height: 1.7;
             font-variant-numeric: tabular-nums;
         }
         .sys-list span:first-child { 
             color: var(--primary-green); 
             font-weight: 800; 
             display: inline-block;
-            width: 72px;
+            width: 68px;
         }
 
         /* --------------------------------------------------------- */
@@ -293,9 +455,9 @@
         .pm2-accordion {
             width: 100%;
             background: var(--card-bg);
-            border: 3px solid var(--primary-black);
+            border: 3px solid var(--border-color);
             border-radius: 0px;
-            box-shadow: 5px 5px 0px var(--primary-black);
+            box-shadow: 5px 5px 0px var(--border-color);
             margin-bottom: 1.5rem;
             transition: box-shadow 0.2s ease;
         }
@@ -314,12 +476,12 @@
             gap: 0.8rem;
             cursor: pointer;
             user-select: none;
-            background: white;
+            background: var(--card-bg);
             transition: background 0.15s ease;
         }
 
         .pm2-accordion-bar:hover {
-            background: #fafbfc;
+            background: var(--table-hover);
         }
 
         .pm2-bar-left {
@@ -336,6 +498,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            color: var(--primary-black);
         }
 
         .summary-pills {
@@ -348,94 +511,95 @@
             font-family: var(--font-mono);
             font-size: 0.78rem;
             font-weight: 800;
-            padding: 3px 8px;
-            border: 2px solid var(--primary-black);
+            padding: 4px 10px;
             border-radius: 0px;
-            background: #fff;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .pill.online { background: #E8F5E9; border-color: var(--primary-green); color: #1B5E20; }
-        .pill.stopped { background: #ECEFF1; border-color: #607D8B; color: #37474F; }
-        .pill.errored { background: #FFEBEE; border-color: var(--alert-red); color: #B71C1C; }
-
-        .btn-toggle-pm2 {
-            background: var(--primary-black);
-            color: white;
-            border: 2px solid var(--primary-black);
-            padding: 6px 12px;
-            font-family: var(--font-mono);
-            font-size: 0.78rem;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 2px 2px 0px var(--primary-green);
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            border: 2px solid var(--border-color);
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-variant-numeric: tabular-nums;
+            background: var(--card-bg);
+            color: var(--primary-black);
+        }
+
+        .pill-total { background: var(--detail-bg); color: var(--detail-text); }
+        .pill-online { background: rgba(0, 200, 83, 0.15); color: var(--primary-green); border-color: var(--primary-green); }
+        .pill-stopped { background: rgba(120, 120, 120, 0.15); color: var(--subtext-color); }
+        .pill-errored { background: rgba(211, 47, 47, 0.15); color: var(--alert-red); border-color: var(--alert-red); }
+
+        .btn-toggle-pm2 {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 800;
+            background: var(--detail-bg);
+            color: var(--detail-text);
+            padding: 6px 14px;
+            border: 2px solid var(--border-color);
+            box-shadow: 2px 2px 0px var(--border-color);
+            cursor: pointer;
+            transition: all 0.1s ease;
+            text-transform: uppercase;
         }
 
         .btn-toggle-pm2:hover {
             transform: translate(-1px, -1px);
-            box-shadow: 3px 3px 0px var(--primary-green);
+            box-shadow: 4px 4px 0px var(--primary-green);
+            background: var(--primary-green);
+            color: white;
         }
 
-        /* Expandable Table Content Drawer */
+        /* Drawer Body */
         .pm2-content-drawer {
             display: none;
-            padding: 0 clamp(1rem, 2vw, 1.5rem) clamp(1rem, 2vw, 1.5rem);
-            border-top: 2px dashed #ccc;
-            animation: fadeIn 0.2s ease-in-out;
+            border-top: 3px solid var(--border-color);
+            background: var(--card-bg);
+            animation: drawerSlide 0.2s cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        @keyframes drawerSlide {
+            0% { opacity: 0; transform: translateY(-8px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
 
         .pm2-accordion.expanded .pm2-content-drawer {
             display: block;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        /* High-Density Brutalist Table */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
-            margin-top: 1rem;
         }
 
-        table.pm2-table {
+        .pm2-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
+            border-collapse: collapse;
             font-family: var(--font-mono);
-            font-size: clamp(0.75rem, 1vw, 0.88rem);
-        }
-
-        table.pm2-table th {
+            font-size: 0.85rem;
             text-align: left;
-            padding: 10px 12px;
-            background: #f1f3f5;
-            border-top: 2px solid var(--primary-black);
-            border-bottom: 2px solid var(--primary-black);
+        }
+
+        .pm2-table th {
+            background: var(--table-header);
+            border-bottom: 2px solid var(--border-color);
+            padding: 10px 14px;
             font-weight: 800;
-            font-size: 0.75rem;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--primary-black);
         }
 
-        table.pm2-table th:first-child { border-left: 2px solid var(--primary-black); }
-        table.pm2-table th:last-child { border-right: 2px solid var(--primary-black); }
-
-        table.pm2-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #e0e0e0;
-            vertical-align: middle;
+        .pm2-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(120, 120, 120, 0.2);
             font-variant-numeric: tabular-nums;
+            color: var(--primary-black);
         }
 
-        table.pm2-table tr:hover td {
-            background-color: #f7f9fa;
+        .pm2-table tr:hover td {
+            background-color: var(--table-hover);
             cursor: pointer;
         }
 
@@ -445,54 +609,48 @@
             height: 8px;
             border-radius: 50%;
             margin-right: 6px;
-            vertical-align: middle;
         }
 
-        .status-dot-inline.online { background-color: var(--primary-green); box-shadow: 0 0 5px rgba(0, 200, 83, 0.8); }
-        .status-dot-inline.stopped { background-color: #9e9e9e; }
-        .status-dot-inline.errored { background-color: var(--alert-red); }
+        .status-dot-inline.online { background-color: var(--primary-green); }
+        .status-dot-inline.stopped { background-color: #777; }
+        .status-dot-inline.errored { background-color: var(--alert-red); animation: pulse 1s infinite; }
 
         .badge-restart {
             padding: 2px 6px;
             border-radius: 0px;
-            font-size: 0.72rem;
             font-weight: 800;
-            border: 1px solid #bbb;
-            background: #f5f5f5;
-            display: inline-block;
+            background: var(--detail-bg);
+            color: var(--detail-text);
+            border: 1px solid var(--border-color);
+            font-size: 0.75rem;
         }
 
-        .badge-restart.warn { background: #FFF3E0; border-color: var(--primary-amber); color: #E65100; }
-        .badge-restart.alert { background: #FFEBEE; border: 2px solid var(--alert-red); color: var(--alert-red); animation: pulse-red 2s infinite; }
-
-        @keyframes pulse-red {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.06); }
-            100% { transform: scale(1); }
-        }
+        .badge-restart.warn { background: var(--primary-amber); color: black; border-color: black; }
+        .badge-restart.alert { background: var(--alert-red); color: white; border-color: black; }
 
         .btn-inspect {
-            background: white;
-            border: 2px solid var(--primary-black);
-            padding: 4px 8px;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            color: var(--primary-black);
+            padding: 4px 10px;
             font-family: var(--font-mono);
-            font-size: 0.72rem;
+            font-size: 0.75rem;
             font-weight: 800;
             cursor: pointer;
-            box-shadow: 2px 2px 0px var(--primary-black);
+            box-shadow: 2px 2px 0px var(--border-color);
             transition: all 0.1s ease;
             text-transform: uppercase;
         }
 
         .btn-inspect:hover {
             transform: translate(-1px, -1px);
-            box-shadow: 3px 3px 0px var(--primary-black);
+            box-shadow: 3px 3px 0px var(--primary-green);
             background: var(--primary-green);
             color: white;
         }
 
         /* --------------------------------------------------------- */
-        /* MODAL (SHARP 0PX)                                        */
+        /* UNIVERSAL MODAL (SHARP 0PX NEO-BRUTALIST)                */
         /* --------------------------------------------------------- */
         .modal-overlay {
             position: fixed;
@@ -500,7 +658,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(13, 13, 13, 0.65);
+            background: var(--modal-overlay);
             backdrop-filter: blur(2px);
             display: none;
             justify-content: center;
@@ -512,15 +670,17 @@
         .modal-overlay.active { display: flex; }
 
         .modal-box {
-            background: white;
-            border: 3px solid var(--primary-black);
+            background: var(--modal-bg);
+            border: 3px solid var(--border-color);
             border-radius: 0px;
-            box-shadow: 8px 8px 0px var(--primary-black);
+            box-shadow: 8px 8px 0px var(--border-color);
             width: 100%;
-            max-width: 560px;
+            max-width: 600px;
             padding: clamp(1.2rem, 2.5vw, 2rem);
             position: relative;
             animation: popIn 0.18s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         @keyframes popIn {
@@ -534,7 +694,7 @@
             align-items: flex-start;
             margin-bottom: 1.2rem;
             padding-bottom: 0.8rem;
-            border-bottom: 2px solid var(--primary-black);
+            border-bottom: 2px solid var(--border-color);
         }
 
         .modal-title {
@@ -542,11 +702,13 @@
             font-family: var(--font-mono);
             font-weight: 800;
             word-break: break-all;
+            color: var(--primary-black);
         }
 
         .modal-close-btn {
-            background: white;
-            border: 2px solid var(--primary-black);
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            color: var(--primary-black);
             font-size: 1.1rem;
             font-weight: 900;
             cursor: pointer;
@@ -555,73 +717,73 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 2px 2px 0px var(--primary-black);
+            box-shadow: 2px 2px 0px var(--border-color);
             transition: all 0.1s ease;
         }
 
         .modal-close-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--alert-red);
             background: var(--alert-red);
             color: white;
         }
 
         .modal-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.8rem;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
             font-family: var(--font-mono);
         }
 
         .modal-item {
-            background: #f8f9fa;
-            border: 2px solid var(--primary-black);
-            border-radius: 0px;
-            padding: 0.6rem 0.8rem;
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            padding: 0.8rem 1rem;
+        }
+
+        .modal-item.full-width {
+            grid-column: 1 / -1;
         }
 
         .modal-item .label {
-            font-size: 0.7rem;
-            color: #666;
-            text-transform: uppercase;
+            font-size: 0.72rem;
             font-weight: 800;
-            margin-bottom: 2px;
+            color: var(--subtext-color);
+            text-transform: uppercase;
+            margin-bottom: 4px;
         }
 
         .modal-item .val {
-            font-weight: 800;
-            font-size: 0.95rem;
-            word-break: break-all;
+            font-size: 1.05rem;
+            font-weight: 900;
+            word-break: break-word;
+            font-variant-numeric: tabular-nums;
+            color: var(--primary-black);
         }
 
-        /* Footer Link */
         .footer-link {
-            font-family: var(--font-mono); 
-            font-weight: bold; 
+            text-align: center;
             margin-top: 1rem;
-            opacity: 0.75; 
-            text-transform: uppercase;
+            font-family: var(--font-mono);
             font-size: 0.85rem;
         }
 
         .footer-link a {
-            color: var(--primary-black); 
-            text-decoration: none; 
-            border-bottom: 2px solid var(--primary-black); 
-            padding-bottom: 2px; 
-            transition: opacity 0.2s, background-color 0.2s;
+            color: var(--primary-black);
+            text-decoration: none;
+            font-weight: 800;
+            border-bottom: 2px solid var(--primary-black);
+            padding-bottom: 2px;
+            transition: all 0.2s;
         }
 
         .footer-link a:hover {
-            background-color: var(--primary-green);
-            opacity: 1;
+            color: var(--primary-green);
+            border-color: var(--primary-green);
         }
 
-        /* --------------------------------------------------------- */
-        /* 9:16 MOBILE & VERTICAL VIEWPORTS                         */
-        /* --------------------------------------------------------- */
+        /* Responsive Mobile Breakpoint */
         @media (max-width: 650px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
             .modal-grid {
                 grid-template-columns: 1fr;
             }
@@ -644,9 +806,12 @@
 
     <div class="dashboard-wrapper">
         <header>
-            <div class="status-badge" id="badge-container" title="Click to reconnect">
-                <div class="dot" id="connection-dot"></div>
-                <span id="connection-text">CONNECTING...</span>
+            <div class="header-controls">
+                <div class="status-badge" id="badge-container" title="Click to reconnect">
+                    <div class="dot" id="connection-dot"></div>
+                    <span id="connection-text">CONNECTING...</span>
+                </div>
+                <button class="theme-btn" id="theme-btn" title="Toggle Dark/Light Mode">DARK</button>
             </div>
             <h1>PiCloud by Govind_SR // Metrics</h1>
         </header>
@@ -657,29 +822,35 @@
             <div class="hero-date" id="date-val">SYS_UPTIME: --</div>
         </div>
 
-        <!-- 16:9 AT-A-GLANCE 5-CARD GRID -->
+        <!-- RESPONSIVE 6-CARD GRID -->
         <div class="dashboard-grid">
             
             <!-- 1. CPU LOAD -->
-            <div class="card">
-                <h2>// CPU_LOAD <span>[CORE]</span></h2>
+            <div class="card" id="card-cpu" data-modal="cpu" title="Click to inspect CPU telemetry">
+                <h2>// CPU_LOAD <span id="core-count-tag">[4 CORES]</span></h2>
                 <div>
                     <div class="value-display"><span id="cpu-val">--</span>%</div>
+                    <div class="sparkline-box">
+                        <svg class="sparkline-svg" id="sparkline-cpu" viewBox="0 0 100 22" preserveAspectRatio="none"></svg>
+                    </div>
                     <div class="bar-container">
                         <div class="bar-fill" id="cpu-bar"></div>
                     </div>
                     <div class="detail-text">
-                        <span>LOAD:</span>
+                        <span id="load-label">LOAD:</span>
                         <span id="load-val">-- -- --</span>
                     </div>
                 </div>
             </div>
 
             <!-- 2. RAM USAGE -->
-            <div class="card">
+            <div class="card" id="card-ram" data-modal="ram" title="Click to inspect Memory details">
                 <h2>// RAM_USAGE <span>[MEM]</span></h2>
                 <div>
                     <div class="value-display"><span id="ram-val">--</span>%</div>
+                    <div class="sparkline-box">
+                        <svg class="sparkline-svg" id="sparkline-ram" viewBox="0 0 100 22" preserveAspectRatio="none"></svg>
+                    </div>
                     <div class="bar-container">
                         <div class="bar-fill" id="ram-bar"></div>
                     </div>
@@ -691,10 +862,13 @@
             </div>
 
             <!-- 3. THERMAL -->
-            <div class="card temp-card">
+            <div class="card temp-card" id="card-temp" data-modal="temp" title="Click to inspect Thermal sensors">
                 <h2>// THERMAL <span id="sensor-tag">[ZONE]</span></h2>
                 <div>
                     <div class="value-display"><span id="temp-val">--</span>°C</div>
+                    <div class="sparkline-box">
+                        <svg class="sparkline-svg" id="sparkline-temp" viewBox="0 0 100 22" preserveAspectRatio="none"></svg>
+                    </div>
                     <div class="bar-container">
                         <div class="bar-fill temp" id="temp-bar"></div>
                     </div>
@@ -706,11 +880,11 @@
             </div>
 
             <!-- 4. STORAGE DISK -->
-            <div class="card">
+            <div class="card" id="card-disk" data-modal="disk" title="Click to inspect Disk metrics">
                 <h2>// STORAGE <span>[ROOT]</span></h2>
                 <div>
                     <div class="value-display"><span id="disk-val">--</span>%</div>
-                    <div class="bar-container">
+                    <div class="bar-container" style="margin: 14px 0 10px 0;">
                         <div class="bar-fill disk" id="disk-bar"></div>
                     </div>
                     <div class="detail-text">
@@ -720,8 +894,25 @@
                 </div>
             </div>
 
-            <!-- 5. SYS INFO -->
-            <div class="card">
+            <!-- 5. NETWORK THROUGHPUT -->
+            <div class="card net-card" id="card-net" data-modal="net" title="Click to inspect Network traffic">
+                <h2>// NETWORK <span id="net-iface">[ENO1]</span></h2>
+                <div>
+                    <div class="value-display net-display">
+                        <span class="net-arrow-down">↓</span> <span id="net-rx-val">-- B/s</span>
+                    </div>
+                    <div class="sparkline-box">
+                        <svg class="sparkline-svg" id="sparkline-net" viewBox="0 0 100 22" preserveAspectRatio="none"></svg>
+                    </div>
+                    <div class="detail-text">
+                        <span>UPLOAD:</span>
+                        <span id="net-tx-val"><span class="net-arrow-up">↑</span> -- B/s</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. SYS INFO -->
+            <div class="card" id="card-sys" data-modal="sys" title="Click to inspect Host system details">
                 <h2>// SYS_INFO <span>[HOST]</span></h2>
                 <ul class="sys-list">
                     <li><span>HOST:</span> <span id="host-val" style="color:var(--primary-black)">--</span></li>
@@ -738,13 +929,13 @@
             <div class="pm2-accordion-bar" id="pm2-toggle-bar">
                 <div class="pm2-bar-left">
                     <div class="pm2-bar-title">
-                        <span>// PM2_SERVICES</span>
+                        <span>// SERVICES</span>
                     </div>
-                    <div class="summary-pills" id="pm2-pills">
-                        <span class="pill" id="pill-total">TOTAL: 0</span>
-                        <span class="pill online" id="pill-online">0 ONLINE</span>
-                        <span class="pill stopped" id="pill-stopped">0 STOPPED</span>
-                        <span class="pill errored" id="pill-errored">0 ERR</span>
+                    <div class="summary-pills">
+                        <span class="pill pill-total" id="pill-total">TOTAL: 0</span>
+                        <span class="pill pill-online" id="pill-online">0 ONLINE</span>
+                        <span class="pill pill-stopped" id="pill-stopped">0 STOPPED</span>
+                        <span class="pill pill-errored" id="pill-errored">0 ERR</span>
                     </div>
                 </div>
                 <button class="btn-toggle-pm2" id="btn-toggle-pm2">VIEW SERVICES [▼]</button>
@@ -767,7 +958,7 @@
                         </thead>
                         <tbody id="pm2-table-body">
                             <tr>
-                                <td colspan="8" style="text-align: center; color: #888; padding: 1.5rem;">
+                                <td colspan="8" style="text-align: center; color: var(--subtext-color); padding: 1.5rem;">
                                     Waiting for PM2 telemetry stream...
                                 </td>
                             </tr>
@@ -783,58 +974,65 @@
         </div>
     </div>
 
-    <!-- Neo-Brutalist Process Details Modal -->
+    <!-- Universal Neo-Brutalist Details Modal -->
     <div class="modal-overlay" id="process-modal">
         <div class="modal-box">
             <div class="modal-header">
                 <div class="modal-title" id="modal-process-title">// PROCESS_INFO</div>
                 <button class="modal-close-btn" id="modal-close" title="Close [ESC]">✕</button>
             </div>
-            <div class="modal-grid">
-                <div class="modal-item">
-                    <div class="label">Process Name</div>
-                    <div class="val" id="m-name">--</div>
-                </div>
-                <div class="modal-item">
-                    <div class="label">PM2 Instance ID</div>
-                    <div class="val" id="m-ids">--</div>
-                </div>
-                <div class="modal-item">
-                    <div class="label">Health Status</div>
-                    <div class="val" id="m-status">--</div>
-                </div>
-                <div class="modal-item">
-                    <div class="label">Restarts</div>
-                    <div class="val" id="m-restarts">--</div>
-                </div>
-                <div class="modal-item">
-                    <div class="label">Memory Footprint</div>
-                    <div class="val" id="m-ram">--</div>
-                </div>
-                <div class="modal-item">
-                    <div class="label">CPU Usage</div>
-                    <div class="val" id="m-cpu">--</div>
-                </div>
-                <div class="modal-item">
-                    <div class="label">Uptime</div>
-                    <div class="val" id="m-uptime">--</div>
-                </div>
-                <div class="modal-item">
-                    <div class="label">Execution Mode</div>
-                    <div class="val" id="m-mode">--</div>
-                </div>
+            <div class="modal-grid" id="modal-content-grid">
+                <!-- Dynamically injected based on inspected card / PM2 process -->
             </div>
         </div>
     </div>
 
     <script>
-        // DOM Elements
+        // -------------------------------------------------------------
+        // THEME MANAGEMENT (NEO-BRUTALIST DARK / LIGHT)
+        // -------------------------------------------------------------
+        const themeBtn = document.getElementById('theme-btn');
+        
+        function initTheme() {
+            const savedTheme = localStorage.getItem('picloud_theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeBtn.innerText = 'LIGHT';
+            } else if (savedTheme === 'light') {
+                document.body.classList.remove('dark-mode');
+                themeBtn.innerText = 'DARK';
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.body.classList.add('dark-mode');
+                themeBtn.innerText = 'LIGHT';
+            } else {
+                document.body.classList.remove('dark-mode');
+                themeBtn.innerText = 'DARK';
+            }
+        }
+
+        themeBtn.addEventListener('click', () => {
+            const isDark = document.body.classList.toggle('dark-mode');
+            themeBtn.innerText = isDark ? 'LIGHT' : 'DARK';
+            localStorage.setItem('picloud_theme', isDark ? 'dark' : 'light');
+        });
+
+        initTheme();
+
+        // -------------------------------------------------------------
+        // DOM ELEMENTS
+        // -------------------------------------------------------------
         const hostVal = document.getElementById('host-val');
-        const cpuVal = document.getElementById('cpu-val'), cpuBar = document.getElementById('cpu-bar'), loadVal = document.getElementById('load-val');
+        const cpuVal = document.getElementById('cpu-val'), cpuBar = document.getElementById('cpu-bar'), loadVal = document.getElementById('load-val'), loadLabel = document.getElementById('load-label'), coreCountTag = document.getElementById('core-count-tag');
         const ramVal = document.getElementById('ram-val'), ramBar = document.getElementById('ram-bar'), ramDetailsVal = document.getElementById('ram-details-val');
         const tempVal = document.getElementById('temp-val'), tempBar = document.getElementById('temp-bar'), sensorTag = document.getElementById('sensor-tag'), tempSensorName = document.getElementById('temp-sensor-name');
         const diskVal = document.getElementById('disk-val'), diskBar = document.getElementById('disk-bar'), diskDetailsVal = document.getElementById('disk-details-val');
+        const netIface = document.getElementById('net-iface'), netRxVal = document.getElementById('net-rx-val'), netTxVal = document.getElementById('net-tx-val');
         
+        const sparklineCpu = document.getElementById('sparkline-cpu');
+        const sparklineRam = document.getElementById('sparkline-ram');
+        const sparklineTemp = document.getElementById('sparkline-temp');
+        const sparklineNet = document.getElementById('sparkline-net');
+
         const timeVal = document.getElementById('time-val');
         const dateVal = document.getElementById('date-val');
         const uptimeVal = document.getElementById('uptime-val');
@@ -845,7 +1043,7 @@
         const connDot = document.getElementById('connection-dot');
         const badgeContainer = document.getElementById('badge-container');
 
-        // PM2 Accordion Elements
+        // PM2 Elements
         const pm2Accordion = document.getElementById('pm2-accordion');
         const pm2ToggleBar = document.getElementById('pm2-toggle-bar');
         const btnTogglePm2 = document.getElementById('btn-toggle-pm2');
@@ -859,16 +1057,16 @@
         const processModal = document.getElementById('process-modal');
         const modalClose = document.getElementById('modal-close');
         const modalTitle = document.getElementById('modal-process-title');
-        const mName = document.getElementById('m-name');
-        const mIds = document.getElementById('m-ids');
-        const mStatus = document.getElementById('m-status');
-        const mRestarts = document.getElementById('m-restarts');
-        const mRam = document.getElementById('m-ram');
-        const mCpu = document.getElementById('m-cpu');
-        const mUptime = document.getElementById('m-uptime');
-        const mMode = document.getElementById('m-mode');
+        const modalContentGrid = document.getElementById('modal-content-grid');
 
+        // Global State & Telemetry History (Last 60s)
+        let lastPayload = null;
         let currentProcesses = [];
+        const MAX_HISTORY = 60;
+        const cpuHistory = [];
+        const ramHistory = [];
+        const tempHistory = [];
+        const netHistory = [];
 
         // Toggle PM2 Collapsible Tab
         function togglePm2Drawer() {
@@ -878,10 +1076,40 @@
         pm2ToggleBar.addEventListener('click', togglePm2Drawer);
 
         // -------------------------------------------------------------
+        // SLIM VECTOR SPARKLINE RENDERER (ZERO EXTERNAL LIBRARIES)
+        // -------------------------------------------------------------
+        function pushHistory(arr, val) {
+            arr.push(val);
+            if (arr.length > MAX_HISTORY) arr.shift();
+        }
+
+        function renderSparkline(svgElement, data, maxVal = 100, colorClass = '') {
+            if (!svgElement || !data || data.length < 2) return;
+            const width = 100;
+            const height = 22;
+            const step = width / (data.length - 1);
+
+            const safeMax = maxVal > 0 ? maxVal : 1;
+            let points = '';
+            for (let i = 0; i < data.length; i++) {
+                const x = (i * step).toFixed(1);
+                const ratio = Math.min(1, Math.max(0, data[i] / safeMax));
+                const y = (height - (ratio * (height - 3)) - 1.5).toFixed(1);
+                points += `${x},${y} `;
+            }
+
+            svgElement.innerHTML = `
+                <polygon points="0,${height} ${points} ${width},${height}" class="sparkline-fill ${colorClass}" />
+                <polyline points="${points.trim()}" class="sparkline-path ${colorClass}" />
+            `;
+        }
+
+        // -------------------------------------------------------------
         // UI UPDATE PIPELINE (JITTER-FREE & SMOOTH)
         // -------------------------------------------------------------
         function updateDashboard(data) {
             if (!data || typeof data !== 'object') return;
+            lastPayload = data;
 
             // 1. Time (Hero Clock)
             if (data.time) {
@@ -893,6 +1121,12 @@
             if (typeof data.cpu === 'number') {
                 cpuVal.innerText = data.cpu.toFixed(1);
                 cpuBar.style.width = `${Math.min(100, Math.max(0, data.cpu))}%`;
+                pushHistory(cpuHistory, data.cpu);
+                renderSparkline(sparklineCpu, cpuHistory, 100);
+            }
+            if (data.cores) {
+                coreCountTag.innerText = `[${data.cores} CORES]`;
+                loadLabel.innerText = `LOAD [${data.cores}C]:`;
             }
             if (Array.isArray(data.loadAvg)) {
                 loadVal.innerText = data.loadAvg.join(' | ');
@@ -902,6 +1136,8 @@
             if (typeof data.ram === 'number') {
                 ramVal.innerText = data.ram.toFixed(1);
                 ramBar.style.width = `${Math.min(100, Math.max(0, data.ram))}%`;
+                pushHistory(ramHistory, data.ram);
+                renderSparkline(sparklineRam, ramHistory, 100);
             }
             if (data.ramDetails) {
                 const avail = data.ramDetails.availableMB ? `${(data.ramDetails.availableMB / 1024).toFixed(1)}GB` : '--';
@@ -926,14 +1162,17 @@
                 } else {
                     tempVal.style.color = 'var(--primary-black)';
                 }
+                pushHistory(tempHistory, isNaN(tempNum) ? 40 : tempNum);
+                renderSparkline(sparklineTemp, tempHistory, 90, 'temp');
             } else {
                 tempVal.innerText = "--";
                 tempBar.style.width = "0%";
             }
 
-            if (data.tempSensor) {
-                sensorTag.innerText = `[${data.tempSensor.toUpperCase()}]`;
-                tempSensorName.innerText = data.tempSensor.toUpperCase();
+            const resolvedSensor = data.tempType || data.tempSensor;
+            if (resolvedSensor) {
+                sensorTag.innerText = `[${resolvedSensor.toUpperCase()}]`;
+                tempSensorName.innerText = resolvedSensor.toUpperCase();
             }
 
             // 5. Storage Disk
@@ -943,7 +1182,21 @@
                 diskDetailsVal.innerText = `${data.disk.usedGB}G / ${data.disk.totalGB}G`;
             }
 
-            // 6. Sys Info
+            // 6. Network Throughput
+            if (data.network) {
+                if (data.network.interface) {
+                    netIface.innerText = `[${data.network.interface.toUpperCase()}]`;
+                }
+                netRxVal.innerText = data.network.rxFormatted || '0 B/s';
+                netTxVal.innerHTML = `<span class="net-arrow-up">↑</span> ${data.network.txFormatted || '0 B/s'}`;
+                
+                const currentRxRate = (data.network.rxSec || 0) / 1024; // in KB/s
+                pushHistory(netHistory, currentRxRate);
+                const maxNet = Math.max(100, ...netHistory);
+                renderSparkline(sparklineNet, netHistory, maxNet, 'net');
+            }
+
+            // 7. Sys Info
             if (data.hostname) hostVal.innerText = data.hostname;
             if (data.osDetails) osVal.innerText = data.osDetails;
             if (data.architecture) archVal.innerText = data.architecture;
@@ -952,7 +1205,7 @@
                 dateVal.innerText = `SYS_UPTIME: ${data.uptime}`;
             }
 
-            // 7. PM2 Section
+            // 8. PM2 Section
             updatePm2Section(data.pm2);
         }
 
@@ -964,7 +1217,7 @@
                 pillErrored.innerText = '0 ERR';
                 pm2TableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" style="text-align: center; color: #888; padding: 1.5rem;">
+                        <td colspan="8" style="text-align: center; color: var(--subtext-color); padding: 1.5rem;">
                             No active PM2 services detected.
                         </td>
                     </tr>
@@ -983,7 +1236,7 @@
             if (currentProcesses.length === 0) {
                 pm2TableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" style="text-align: center; color: #888; padding: 1.5rem;">
+                        <td colspan="8" style="text-align: center; color: var(--subtext-color); padding: 1.5rem;">
                             No visible PM2 services configured.
                         </td>
                     </tr>
@@ -1027,28 +1280,230 @@
         }
 
         // -------------------------------------------------------------
-        // MODAL MANAGEMENT
+        // UNIVERSAL MODAL SYSTEM (CARD INSPECT & PM2 DETAILS)
         // -------------------------------------------------------------
         function openProcessModal(index) {
             const proc = currentProcesses[index];
             if (!proc) return;
 
             modalTitle.innerText = `// PROCESS: ${proc.name.toUpperCase()}`;
-            mName.innerText = proc.name;
-            mIds.innerText = `PM2 ID: #${proc.id}`;
-            mStatus.innerHTML = `<span class="status-dot-inline ${proc.status}"></span>${proc.status.toUpperCase()}`;
-            mStatus.style.color = proc.status === 'online' ? 'var(--primary-green)' : (proc.status === 'errored' ? 'var(--alert-red)' : '#666');
-            
-            mRestarts.innerText = `${proc.restarts} ${proc.restartAlert ? ' (ALERT: EXCESSIVE RESTARTS)' : ''}`;
-            mRestarts.style.color = proc.restartAlert ? 'var(--alert-red)' : 'inherit';
-            
-            mRam.innerText = `${proc.memoryMB} MB`;
-            mCpu.innerText = `${proc.cpu}%`;
-            mUptime.innerText = proc.uptime;
-            mMode.innerText = `${proc.mode} mode`;
+            modalContentGrid.innerHTML = `
+                <div class="modal-item">
+                    <div class="label">Process Name</div>
+                    <div class="val">${escapeHtml(proc.name)}</div>
+                </div>
+                <div class="modal-item">
+                    <div class="label">PM2 Instance ID</div>
+                    <div class="val">#${proc.id}</div>
+                </div>
+                <div class="modal-item">
+                    <div class="label">Health Status</div>
+                    <div class="val" style="color: ${proc.status === 'online' ? 'var(--primary-green)' : (proc.status === 'errored' ? 'var(--alert-red)' : '#666')}">
+                        <span class="status-dot-inline ${proc.status}"></span>${proc.status.toUpperCase()}
+                    </div>
+                </div>
+                <div class="modal-item">
+                    <div class="label">Restarts</div>
+                    <div class="val" style="color: ${proc.restartAlert ? 'var(--alert-red)' : 'inherit'}">${proc.restarts} ${proc.restartAlert ? '(EXCESSIVE)' : ''}</div>
+                </div>
+                <div class="modal-item">
+                    <div class="label">Memory Footprint</div>
+                    <div class="val">${proc.memoryMB} MB</div>
+                </div>
+                <div class="modal-item">
+                    <div class="label">CPU Usage</div>
+                    <div class="val">${proc.cpu}%</div>
+                </div>
+                <div class="modal-item">
+                    <div class="label">Uptime</div>
+                    <div class="val">${escapeHtml(proc.uptime)}</div>
+                </div>
+                <div class="modal-item">
+                    <div class="label">Execution Mode</div>
+                    <div class="val">${escapeHtml(proc.mode)} mode</div>
+                </div>
+            `;
 
             processModal.classList.add('active');
         }
+
+        function openCardModal(cardType) {
+            if (!lastPayload) return;
+
+            switch(cardType) {
+                case 'cpu':
+                    modalTitle.innerText = `// CPU_TELEMETRY`;
+                    modalContentGrid.innerHTML = `
+                        <div class="modal-item full-width">
+                            <div class="label">Processor Model</div>
+                            <div class="val">${escapeHtml(lastPayload.cpuModel || 'Generic x86_64 Processor')}</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Logical Cores</div>
+                            <div class="val">${lastPayload.cores || 4} Cores</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Current Utilization</div>
+                            <div class="val" style="color: var(--primary-green);">${lastPayload.cpu}%</div>
+                        </div>
+                        <div class="modal-item full-width">
+                            <div class="label">Load Averages (1m / 5m / 15m)</div>
+                            <div class="val">${Array.isArray(lastPayload.loadAvg) ? lastPayload.loadAvg.join('  |  ') : '--'}</div>
+                        </div>
+                        <div class="modal-item full-width">
+                            <div class="label">Architecture / Platform</div>
+                            <div class="val">${escapeHtml(lastPayload.architecture)} (${escapeHtml(lastPayload.osDetails)})</div>
+                        </div>
+                    `;
+                    break;
+
+                case 'ram':
+                    const r = lastPayload.ramDetails || {};
+                    modalTitle.innerText = `// MEMORY_TELEMETRY`;
+                    modalContentGrid.innerHTML = `
+                        <div class="modal-item">
+                            <div class="label">Total System RAM</div>
+                            <div class="val">${r.totalMB || '--'} MB (${((r.totalMB || 0) / 1024).toFixed(2)} GB)</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">RAM Usage</div>
+                            <div class="val" style="color: var(--primary-green);">${lastPayload.ram}%</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Active Memory In Use</div>
+                            <div class="val">${r.usedMB || '--'} MB</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Available For Tasks</div>
+                            <div class="val">${r.availableMB || '--'} MB</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Kernel Buffers</div>
+                            <div class="val">${r.buffersMB !== undefined ? r.buffersMB + ' MB' : '--'}</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Page Cache</div>
+                            <div class="val">${r.cachedMB !== undefined ? r.cachedMB + ' MB' : '--'}</div>
+                        </div>
+                    `;
+                    break;
+
+                case 'temp':
+                    modalTitle.innerText = `// THERMAL_ZONES`;
+                    let thermalRows = '';
+                    if (Array.isArray(lastPayload.thermalDetails) && lastPayload.thermalDetails.length > 0) {
+                        thermalRows = lastPayload.thermalDetails.map(t => `
+                            <div class="modal-item">
+                                <div class="label">${escapeHtml(t.type || t.zone || 'Thermal Sensor')}</div>
+                                <div class="val">${t.tempC}°C</div>
+                            </div>
+                        `).join('');
+                    } else {
+                        thermalRows = `
+                            <div class="modal-item full-width">
+                                <div class="label">Primary Sensor</div>
+                                <div class="val">${lastPayload.temp}°C (${escapeHtml(lastPayload.tempType || 'AUTO')})</div>
+                            </div>
+                        `;
+                    }
+                    modalContentGrid.innerHTML = thermalRows;
+                    break;
+
+                case 'disk':
+                    const d = lastPayload.disk || {};
+                    modalTitle.innerText = `// STORAGE_TELEMETRY`;
+                    modalContentGrid.innerHTML = `
+                        <div class="modal-item full-width">
+                            <div class="label">Mount Point</div>
+                            <div class="val">/ (Linux Root Filesystem)</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Total Disk Capacity</div>
+                            <div class="val">${d.totalGB || '--'} GB</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Storage Utilized</div>
+                            <div class="val" style="color: var(--primary-blue);">${d.usedPercent || '--'}%</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Used Space</div>
+                            <div class="val">${d.usedGB || '--'} GB</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Available Free Space</div>
+                            <div class="val">${d.totalGB && d.usedGB ? (d.totalGB - d.usedGB) + ' GB' : '--'}</div>
+                        </div>
+                    `;
+                    break;
+
+                case 'net':
+                    const n = lastPayload.network || {};
+                    modalTitle.innerText = `// NETWORK_TELEMETRY`;
+                    modalContentGrid.innerHTML = `
+                        <div class="modal-item full-width">
+                            <div class="label">Primary Physical Uplink</div>
+                            <div class="val">${escapeHtml(n.interface ? n.interface.toUpperCase() : 'UNKNOWN')}</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Current Inbound (Download)</div>
+                            <div class="val" style="color: var(--primary-green);">↓ ${n.rxFormatted || '--'}</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Current Outbound (Upload)</div>
+                            <div class="val" style="color: var(--primary-blue);">↑ ${n.txFormatted || '--'}</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Lifetime Received (RX)</div>
+                            <div class="val">${n.totalRxFormatted || '--'}</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Lifetime Transmitted (TX)</div>
+                            <div class="val">${n.totalTxFormatted || '--'}</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Inbound Packets</div>
+                            <div class="val">${n.rxPackets ? n.rxPackets.toLocaleString() : '--'}</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Outbound Packets</div>
+                            <div class="val">${n.txPackets ? n.txPackets.toLocaleString() : '--'}</div>
+                        </div>
+                    `;
+                    break;
+
+                case 'sys':
+                    modalTitle.innerText = `// SYSTEM_INFO`;
+                    modalContentGrid.innerHTML = `
+                        <div class="modal-item full-width">
+                            <div class="label">System Hostname</div>
+                            <div class="val">${escapeHtml(lastPayload.hostname || 'PiCloud')}</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">Operating System</div>
+                            <div class="val">${escapeHtml(lastPayload.osDetails || 'Linux')}</div>
+                        </div>
+                        <div class="modal-item">
+                            <div class="label">CPU Architecture</div>
+                            <div class="val">${escapeHtml(lastPayload.architecture || 'x64')}</div>
+                        </div>
+                        <div class="modal-item full-width">
+                            <div class="label">System Continuous Uptime</div>
+                            <div class="val" style="color: var(--primary-green);">${escapeHtml(lastPayload.uptime || '--')}</div>
+                        </div>
+                    `;
+                    break;
+            }
+
+            processModal.classList.add('active');
+        }
+
+        // Attach click listeners to all cards for deep inspection
+        document.querySelectorAll('.card[data-modal]').forEach(card => {
+            card.addEventListener('click', () => {
+                const modalType = card.getAttribute('data-modal');
+                if (modalType) openCardModal(modalType);
+            });
+        });
 
         function closeModal() {
             processModal.classList.remove('active');
@@ -1119,10 +1574,15 @@
             }
 
             ws.onopen = () => {
-                reconnectDelay = 1500;
-                connText.innerText = 'LIVE_STREAM';
+                console.log('Connected to real-time metrics telemetry stream.');
+                connText.innerText = 'ONLINE // LIVE';
                 connDot.style.backgroundColor = 'var(--primary-green)';
                 badgeContainer.style.boxShadow = '3px 3px 0px var(--primary-green)';
+                reconnectDelay = 1500;
+                if (reconnectTimeout) {
+                    clearTimeout(reconnectTimeout);
+                    reconnectTimeout = null;
+                }
             };
 
             ws.onmessage = (event) => {
@@ -1130,38 +1590,43 @@
                     const data = JSON.parse(event.data);
                     updateDashboard(data);
                 } catch (err) {
-                    console.warn("Telemetry parse error:", err);
+                    console.error('Error parsing telemetry payload:', err);
                 }
             };
 
-            ws.onerror = (err) => {
+            ws.onclose = () => {
                 connText.innerText = 'DISCONNECTED';
                 connDot.style.backgroundColor = 'var(--alert-red)';
                 badgeContainer.style.boxShadow = '3px 3px 0px var(--alert-red)';
+                scheduleReconnect();
             };
 
-            ws.onclose = () => {
-                connText.innerText = 'RECONNECTING...';
-                connDot.style.backgroundColor = 'var(--primary-amber)';
-                badgeContainer.style.boxShadow = '3px 3px 0px var(--primary-amber)';
-                scheduleReconnect();
+            ws.onerror = (err) => {
+                console.warn('WebSocket telemetry stream error:', err);
+                ws.close();
             };
         }
 
         function scheduleReconnect() {
-            if (reconnectTimeout) clearTimeout(reconnectTimeout);
+            if (reconnectTimeout) return;
+            console.log(`Scheduling reconnect in ${reconnectDelay}ms...`);
             reconnectTimeout = setTimeout(() => {
-                reconnectDelay = Math.min(reconnectDelay * 1.5, 6000);
+                reconnectTimeout = null;
+                reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
                 connectWebSocket();
             }, reconnectDelay);
         }
 
+        // Manual reconnect on clicking badge
         badgeContainer.addEventListener('click', () => {
-            console.log("Manual reconnect triggered.");
+            if (reconnectTimeout) {
+                clearTimeout(reconnectTimeout);
+                reconnectTimeout = null;
+            }
             connectWebSocket();
         });
 
-        // Start Connection
+        // Start Stream
         connectWebSocket();
     </script>
 </body>

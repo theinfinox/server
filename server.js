@@ -83,7 +83,13 @@ const wss = new WebSocket.Server({
 console.log(`[Security] WebSocket Server running on ws://0.0.0.0:${PORT} with Origin whitelisting & DoS guard`);
 
 // -------------------------------------------------------------
-// 1. THERMAL SENSOR AUTO-RESOLVER (MASKED)
+// 1. HARDWARE INFO CACHED AT STARTUP (ZERO TICK OVERHEAD)
+// -------------------------------------------------------------
+const CPU_MODEL = (os.cpus()[0] && os.cpus()[0].model) || 'x86_64 Processor';
+const CPU_CORES = os.cpus().length || 1;
+
+// -------------------------------------------------------------
+// 2. THERMAL SENSOR AUTO-RESOLVER & MULTI-ZONE INSPECTOR
 // -------------------------------------------------------------
 let cachedThermalSensor = undefined;
 
@@ -105,22 +111,24 @@ function resolveThermalSensor() {
                 const tempPath = path.join(thermalBase, zone, 'temp');
                 if (fs.existsSync(typePath) && fs.existsSync(tempPath)) {
                     try {
-                        const type = fs.readFileSync(typePath, 'utf8').trim().toLowerCase();
-                        candidates.push({ type, tempPath });
+                        const type = fs.readFileSync(typePath, 'utf8').trim();
+                        candidates.push({ type, tempPath, zone });
                     } catch (e) {}
                 }
             }
 
             for (const prio of priorityTypes) {
-                const match = candidates.find(c => c.type.includes(prio));
+                const match = candidates.find(c => c.type.toLowerCase().includes(prio));
                 if (match) {
-                    cachedThermalSensor = match.tempPath;
+                    cachedThermalSensor = match;
+                    console.log(`[Thermal] Auto-resolved primary CPU sensor: ${match.tempPath} (${match.type})`);
                     return cachedThermalSensor;
                 }
             }
 
             if (candidates.length > 0) {
-                cachedThermalSensor = candidates[0].tempPath;
+                cachedThermalSensor = candidates[0];
+                console.log(`[Thermal] Fallback thermal sensor selected: ${cachedThermalSensor.tempPath} (${cachedThermalSensor.type})`);
                 return cachedThermalSensor;
             }
         }
@@ -132,20 +140,46 @@ function resolveThermalSensor() {
 
 function getCpuTemp() {
     try {
-        const sensorPath = resolveThermalSensor();
-        if (!sensorPath) return null;
-        const raw = fs.readFileSync(sensorPath, 'utf8').trim();
+        const sensor = resolveThermalSensor();
+        if (!sensor) return { temp: null, type: 'UNKNOWN' };
+        const raw = fs.readFileSync(sensor.tempPath, 'utf8').trim();
         const val = parseFloat(raw);
-        if (isNaN(val)) return null;
+        if (isNaN(val)) return { temp: null, type: sensor.type };
         const tempC = val > 1000 ? val / 1000 : val;
-        return tempC.toFixed(1);
+        return { temp: tempC.toFixed(1), type: sensor.type };
     } catch (e) {
-        return null;
+        return { temp: null, type: 'UNKNOWN' };
     }
 }
 
+function getAllThermalSensors() {
+    const thermalBase = '/sys/class/thermal';
+    const list = [];
+    try {
+        if (fs.existsSync(thermalBase)) {
+            const entries = fs.readdirSync(thermalBase).filter(name => name.startsWith('thermal_zone'));
+            for (const zone of entries) {
+                const typePath = path.join(thermalBase, zone, 'type');
+                const tempPath = path.join(thermalBase, zone, 'temp');
+                if (fs.existsSync(typePath) && fs.existsSync(tempPath)) {
+                    try {
+                        const type = fs.readFileSync(typePath, 'utf8').trim();
+                        const raw = fs.readFileSync(tempPath, 'utf8').trim();
+                        const val = parseFloat(raw);
+                        if (!isNaN(val)) {
+                            const tempC = val > 1000 ? val / 1000 : val;
+                            list.push({ zone, type, tempC: tempC.toFixed(1) });
+                        }
+                    } catch (e) {}
+                }
+            }
+        }
+    } catch (e) {}
+    return list;
+}
+
 // -------------------------------------------------------------
-// 2. ACCURATE SYSTEM METRICS
+// 3. ACCURATE SYSTEM & HARDWARE METRICS
 // -------------------------------------------------------------
 function getCpuLoad() {
     const cpus = os.cpus();
@@ -167,14 +201,22 @@ function getMemoryMetrics() {
             const content = fs.readFileSync('/proc/meminfo', 'utf8');
             let memTotalKb = null;
             let memAvailKb = null;
+            let memFreeKb = null;
+            let buffersKb = 0;
+            let cachedKb = 0;
 
             for (const line of content.split('\n')) {
                 if (line.startsWith('MemTotal:')) {
                     memTotalKb = parseInt(line.replace(/[^0-9]/g, ''), 10);
                 } else if (line.startsWith('MemAvailable:')) {
                     memAvailKb = parseInt(line.replace(/[^0-9]/g, ''), 10);
+                } else if (line.startsWith('MemFree:')) {
+                    memFreeKb = parseInt(line.replace(/[^0-9]/g, ''), 10);
+                } else if (line.startsWith('Buffers:')) {
+                    buffersKb = parseInt(line.replace(/[^0-9]/g, ''), 10);
+                } else if (line.startsWith('Cached:')) {
+                    cachedKb = parseInt(line.replace(/[^0-9]/g, ''), 10);
                 }
-                if (memTotalKb !== null && memAvailKb !== null) break;
             }
 
             if (memTotalKb && memAvailKb !== null) {
@@ -184,7 +226,10 @@ function getMemoryMetrics() {
                     percent: Math.min(100, Math.max(0, percent)),
                     totalMB: Math.round(memTotalKb / 1024),
                     usedMB: Math.round(usedKb / 1024),
-                    availableMB: Math.round(memAvailKb / 1024)
+                    availableMB: Math.round(memAvailKb / 1024),
+                    freeMB: memFreeKb !== null ? Math.round(memFreeKb / 1024) : 0,
+                    buffersMB: Math.round(buffersKb / 1024),
+                    cachedMB: Math.round(cachedKb / 1024)
                 };
             }
         }
@@ -197,7 +242,10 @@ function getMemoryMetrics() {
         percent: total > 0 ? (used / total) * 100 : 0,
         totalMB: Math.round(total / (1024 * 1024)),
         usedMB: Math.round(used / (1024 * 1024)),
-        availableMB: Math.round(free / (1024 * 1024))
+        availableMB: Math.round(free / (1024 * 1024)),
+        freeMB: Math.round(free / (1024 * 1024)),
+        buffersMB: 0,
+        cachedMB: 0
     };
 }
 
@@ -219,6 +267,122 @@ function getDiskMetrics() {
         }
     } catch (e) {}
     return null;
+}
+
+// -------------------------------------------------------------
+// 4. LIVE NETWORK THROUGHPUT ENGINE (/proc/net/dev)
+// -------------------------------------------------------------
+let lastNetSample = null;
+let cachedNetInterface = null;
+
+function formatBytesPerSec(bytes) {
+    if (bytes < 1024) return `${bytes} B/s`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB/s`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB/s`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB/s`;
+}
+
+function formatTotalBytes(bytes) {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function getNetworkMetrics() {
+    try {
+        if (process.platform !== 'linux' || !fs.existsSync('/proc/net/dev')) {
+            return null;
+        }
+
+        const content = fs.readFileSync('/proc/net/dev', 'utf8');
+        const lines = content.trim().split('\n').slice(2);
+        const ifaces = [];
+
+        for (const line of lines) {
+            const parts = line.trim().split(/\s+/);
+            if (parts.length < 10) continue;
+            const iface = parts[0].replace(':', '');
+            if (iface === 'lo') continue;
+
+            const rxBytes = parseInt(parts[1], 10);
+            const rxPackets = parseInt(parts[2], 10);
+            const txBytes = parseInt(parts[9], 10);
+            const txPackets = parseInt(parts[10], 10);
+
+            if (!isNaN(rxBytes) && !isNaN(txBytes)) {
+                ifaces.push({ iface, rxBytes, txBytes, rxPackets, txPackets });
+            }
+        }
+
+        if (ifaces.length === 0) return null;
+
+        // Auto-select primary physical interface
+        if (!cachedNetInterface) {
+            const priorityList = ['eno1', 'eth0', 'enp', 'wlo1', 'wlan0'];
+            for (const p of priorityList) {
+                const match = ifaces.find(i => i.iface.startsWith(p));
+                if (match) {
+                    cachedNetInterface = match.iface;
+                    break;
+                }
+            }
+            if (!cachedNetInterface) {
+                const nonVirtual = ifaces.filter(i => !i.iface.startsWith('br-') && !i.iface.startsWith('veth') && !i.iface.startsWith('docker'));
+                cachedNetInterface = (nonVirtual.length > 0 ? nonVirtual : ifaces)[0].iface;
+            }
+        }
+
+        const target = ifaces.find(i => i.iface === cachedNetInterface) || ifaces[0];
+        const now = Date.now();
+
+        if (!lastNetSample || lastNetSample.iface !== target.iface) {
+            lastNetSample = {
+                iface: target.iface,
+                rxBytes: target.rxBytes,
+                txBytes: target.txBytes,
+                time: now
+            };
+            return {
+                interface: target.iface,
+                rxSec: 0,
+                txSec: 0,
+                rxFormatted: '0 B/s',
+                txFormatted: '0 B/s',
+                totalRxFormatted: formatTotalBytes(target.rxBytes),
+                totalTxFormatted: formatTotalBytes(target.txBytes),
+                rxPackets: target.rxPackets,
+                txPackets: target.txPackets
+            };
+        }
+
+        const elapsedSec = Math.max(0.1, (now - lastNetSample.time) / 1000);
+        const deltaRx = Math.max(0, target.rxBytes - lastNetSample.rxBytes);
+        const deltaTx = Math.max(0, target.txBytes - lastNetSample.txBytes);
+
+        const rxSec = Math.round(deltaRx / elapsedSec);
+        const txSec = Math.round(deltaTx / elapsedSec);
+
+        lastNetSample = {
+            iface: target.iface,
+            rxBytes: target.rxBytes,
+            txBytes: target.txBytes,
+            time: now
+        };
+
+        return {
+            interface: target.iface,
+            rxSec: rxSec,
+            txSec: txSec,
+            rxFormatted: formatBytesPerSec(rxSec),
+            txFormatted: formatBytesPerSec(txSec),
+            totalRxFormatted: formatTotalBytes(target.rxBytes),
+            totalTxFormatted: formatTotalBytes(target.txBytes),
+            rxPackets: target.rxPackets,
+            txPackets: target.txPackets
+        };
+    } catch (e) {
+        return null;
+    }
 }
 
 function formatUptime(seconds) {
@@ -429,11 +593,18 @@ setInterval(() => {
     const disk = getDiskMetrics();
 
     // 3. Compose Sanitized Payload (Masked Kernel, No PIDs)
+    const tempObj = getCpuTemp();
+    const net = getNetworkMetrics();
+    const thermalList = getAllThermalSensors();
+
     const payload = {
         cpu: cpuPercentage,
+        cpuModel: CPU_MODEL,
+        cores: CPU_CORES,
         ram: parseFloat(mem.percent.toFixed(1)),
         time: new Date().toISOString(),
-        temp: getCpuTemp(),
+        temp: tempObj.temp,
+        tempType: tempObj.type,
         loadAvg: os.loadavg().map(load => load.toFixed(2)),
         uptime: formatUptime(os.uptime()),
 
@@ -445,9 +616,14 @@ setInterval(() => {
         ramDetails: {
             totalMB: mem.totalMB,
             usedMB: mem.usedMB,
-            availableMB: mem.availableMB
+            availableMB: mem.availableMB,
+            freeMB: mem.freeMB,
+            buffersMB: mem.buffersMB,
+            cachedMB: mem.cachedMB
         },
         disk: disk,
+        network: net,
+        thermalDetails: thermalList,
         pm2: pm2State
     };
 
