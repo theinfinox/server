@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Status // Live</title>
+    <style>
+        :root {
+            --primary-black: #0d0d0d;
+            --primary-green: #00C853;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --font-main: 'Inter', -apple-system, sans-serif;
+            --font-mono: 'Courier New', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: var(--font-main);
+            color: var(--primary-black);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        /* Header & Live Indicator */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-weight: bold;
+            background: var(--primary-black);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            border: 2px solid var(--primary-black);
+            box-shadow: 4px 4px 0px var(--primary-green);
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--primary-green);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 200, 83, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border: 3px solid var(--primary-black);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 8px 8px 0px var(--primary-black);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 10px 10px 0px var(--primary-green);
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            font-family: var(--font-mono);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .value-display {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            letter-spacing: -2px;
+        }
+
+        /* Fluid Progress Bars */
+        .bar-container {
+            width: 100%;
+            height: 24px;
+            background-color: #e0e0e0;
+            border: 2px solid var(--primary-black);
+            border-radius: 50px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background-color: var(--primary-green);
+            width: 0%;
+            /* This cubic-bezier creates the fluid, spring-like motion */
+            transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            border-right: 2px solid var(--primary-black);
+        }
+
+        /* Specific Time styling */
+        #time-val { font-family: var(--font-mono); font-size: 2.2rem; letter-spacing: 0; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>SERVER_METRICS</h1>
+        <div class="status-badge">
+            <div class="dot" id="connection-dot"></div>
+            <span id="connection-text">CONNECTING...</span>
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        <div class="card">
+            <h2>// UPTIME_CLOCK <span>[SYS]</span></h2>
+            <div class="value-display" id="time-val">00:00:00</div>
+            <p style="font-family: var(--font-mono); opacity: 0.6; font-size: 0.9rem;" id="date-val">--</p>
+        </div>
+
+        <div class="card">
+            <h2>// CPU_LOAD <span>[CORE]</span></h2>
+            <div class="value-display"><span id="cpu-val">0</span>%</div>
+            <div class="bar-container">
+                <div class="bar-fill" id="cpu-bar"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>// RAM_USAGE <span>[MEM]</span></h2>
+            <div class="value-display"><span id="ram-val">0</span>%</div>
+            <div class="bar-container">
+                <div class="bar-fill" id="ram-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const cpuVal = document.getElementById('cpu-val');
+        const cpuBar = document.getElementById('cpu-bar');
+        const ramVal = document.getElementById('ram-val');
+        const ramBar = document.getElementById('ram-bar');
+        const timeVal = document.getElementById('time-val');
+        const dateVal = document.getElementById('date-val');
+        const connText = document.getElementById('connection-text');
+        const connDot = document.getElementById('connection-dot');
+
+        // Update UI Function
+        function updateDashboard(data) {
+            // Update CPU with fluid bar
+            cpuVal.innerText = data.cpu.toFixed(1);
+            cpuBar.style.width = `${data.cpu}%`;
+
+            // Update RAM with fluid bar
+            ramVal.innerText = data.ram.toFixed(1);
+            ramBar.style.width = `${data.ram}%`;
+
+            // Update Time
+            const date = new Date(data.time);
+            timeVal.innerText = date.toLocaleTimeString('en-US', { hour12: false });
+            dateVal.innerText = date.toDateString();
+        }
+
+        // --- WebSocket Connection ---
+        const ws = new WebSocket('ws://localhost:3051'); // Change this to your server IP later
+
+        ws.onopen = () => {
+            connText.innerText = 'LIVE_STREAM';
+            connDot.style.backgroundColor = 'var(--primary-green)';
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            updateDashboard(data);
+        };
+
+        ws.onerror = () => {
+            connText.innerText = 'OFFLINE / SIMULATING';
+            connDot.style.backgroundColor = 'red';
+            startSimulation(); // Fallback if no backend is running
+        };
+
+        ws.onclose = () => {
+            connText.innerText = 'CONNECTION LOST';
+            connDot.style.backgroundColor = 'red';
+        };
+
+        // --- Fallback Simulation (Just so you can see the design immediately) ---
+        function startSimulation() {
+            let simCpu = 10;
+            let simRam = 40;
+            
+            setInterval(() => {
+                // Generate realistic looking random fluctuations
+                simCpu = Math.max(5, Math.min(95, simCpu + (Math.random() * 20 - 10)));
+                simRam = Math.max(20, Math.min(85, simRam + (Math.random() * 6 - 3)));
+
+                updateDashboard({
+                    cpu: simCpu,
+                    ram: simRam,
+                    time: new Date().toISOString()
+                });
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
