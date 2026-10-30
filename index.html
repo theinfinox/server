@@ -19,7 +19,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Reenie+Beanie&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Reenie+Beanie&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -44,13 +44,13 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: clamp(1rem, 5vw, 4rem);
+            padding: clamp(0.75rem, 2vh, 1.8rem) clamp(0.75rem, 3vw, 2rem);
         }
 
-        /* Central Wrapper for 4K Scaling */
+        /* Proportional 16:9 & 9:16 Adaptive Shell */
         .dashboard-wrapper {
             width: 100%;
-            max-width: 1600px;
+            max-width: 1440px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -59,20 +59,20 @@
         /* Header & Live Indicator */
         header { 
             text-align: center; 
-            margin-bottom: 2rem; 
+            margin-bottom: clamp(0.8rem, 1.8vh, 1.5rem); 
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1rem;
+            gap: 0.5rem;
         }
         
         h1 {
-            font-size: clamp(1.8rem, 4.5vw, 3.4rem);
-            letter-spacing: -1px;
+            font-size: clamp(1.8rem, 3.8vw, 3rem);
+            letter-spacing: -0.5px;
             font-family: var(--font-cursive);
             font-weight: 400;
             font-style: normal;
-            line-height: 1.1;
+            line-height: 1;
         }
 
         .status-badge {
@@ -80,26 +80,27 @@
             align-items: center;
             gap: 8px;
             font-family: var(--font-mono);
-            font-size: 0.9rem;
-            font-weight: bold;
+            font-size: 0.85rem;
+            font-weight: 700;
             background: var(--primary-black);
             color: white;
-            padding: 8px 20px;
-            border-radius: 0px; /* Sharp authentic brutalism */
+            padding: 6px 16px;
+            border-radius: 0px;
             border: 3px solid var(--primary-black);
-            box-shadow: 4px 4px 0px var(--primary-green);
+            box-shadow: 3px 3px 0px var(--primary-green);
             transition: transform 0.2s, box-shadow 0.2s;
             cursor: pointer;
+            user-select: none;
         }
 
         .status-badge:hover { 
-            transform: translate(-2px, -2px); 
-            box-shadow: 6px 6px 0px var(--primary-green);
+            transform: translate(-1px, -1px); 
+            box-shadow: 5px 5px 0px var(--primary-green);
         }
 
         .dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background-color: var(--primary-green);
             border-radius: 50%;
             animation: pulse 1.5s infinite;
@@ -107,120 +108,134 @@
 
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7); }
-            70% { box-shadow: 0 0 0 12px rgba(0, 200, 83, 0); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 200, 83, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0); }
         }
 
-        /* MASSIVE HERO CLOCK */
+        /* HERO CLOCK (CALIBRATED & JITTER-FREE) */
         .hero-clock-container {
             text-align: center;
-            margin-bottom: 3.5rem;
+            margin-bottom: clamp(1rem, 2.2vh, 2rem);
             width: 100%;
         }
 
         .hero-clock {
             font-family: var(--font-mono);
-            font-size: clamp(3.2rem, 12vw, 9.5rem); 
+            font-size: clamp(2.4rem, 5.5vw, 4.6rem); 
             font-weight: 900;
             line-height: 1;
-            letter-spacing: -2px;
+            letter-spacing: -1.5px;
             color: var(--primary-black);
-            text-shadow: 6px 6px 0px var(--primary-green);
+            text-shadow: 5px 5px 0px var(--primary-green);
             transition: text-shadow 0.3s ease;
+            font-variant-numeric: tabular-nums;
         }
 
         .hero-clock:hover {
-            text-shadow: 8px 8px 0px var(--alert-red);
+            text-shadow: 6px 6px 0px var(--alert-red);
             cursor: default;
         }
 
         .hero-date {
             font-family: var(--font-mono);
-            font-size: clamp(1rem, 2vw, 1.8rem);
-            font-weight: bold;
-            opacity: 0.85;
-            margin-top: 1rem;
+            font-size: clamp(0.85rem, 1.4vw, 1.15rem);
+            font-weight: 700;
+            opacity: 0.8;
+            margin-top: 0.5rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            font-variant-numeric: tabular-nums;
         }
 
-        /* Grid Layout */
+        /* --------------------------------------------------------- */
+        /* 16:9 AT-A-GLANCE 5-CARD GRID                             */
+        /* --------------------------------------------------------- */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: clamp(1.5rem, 2.5vw, 2.5rem);
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: clamp(0.75rem, 1.5vw, 1.4rem);
             width: 100%;
-            margin-bottom: 2.5rem;
+            margin-bottom: clamp(1rem, 2vh, 1.6rem);
         }
 
-        /* Card Styles */
+        /* On Desktop (16:9 viewports >= 1150px): All 5 cards in ONE single row */
+        @media (min-width: 1150px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        /* Sharp Neo-Brutalist Cards */
         .card {
             background: var(--card-bg);
-            border: 4px solid var(--primary-black);
-            border-radius: 0px; /* Sharper corners for true brutalism */
-            padding: clamp(1.5rem, 2.5vw, 2.2rem);
-            box-shadow: 8px 8px 0px var(--primary-black);
-            transition: all 0.2s ease;
+            border: 3px solid var(--primary-black);
+            border-radius: 0px;
+            padding: clamp(1rem, 1.8vw, 1.4rem);
+            box-shadow: 5px 5px 0px var(--primary-black);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            min-height: 175px;
         }
 
         .card:hover {
-            transform: translate(-3px, -3px);
-            box-shadow: 11px 11px 0px var(--primary-green);
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0px var(--primary-green);
         }
 
         .card.temp-card:hover {
-            box-shadow: 11px 11px 0px var(--alert-red);
+            box-shadow: 7px 7px 0px var(--alert-red);
         }
 
         .card h2 {
-            font-size: clamp(1rem, 1.8vw, 1.3rem);
+            font-size: clamp(0.85rem, 1.1vw, 1rem);
             font-family: var(--font-mono);
-            margin-bottom: 1.5rem;
+            margin-bottom: 0.8rem;
             display: flex;
             justify-content: space-between;
-            border-bottom: 3px solid var(--primary-black);
-            padding-bottom: 0.6rem;
+            border-bottom: 2px solid var(--primary-black);
+            padding-bottom: 0.4rem;
             font-weight: 800;
         }
 
         .card h2 span {
-            color: #666;
+            color: #777;
             font-size: 0.85em;
         }
 
         .value-display {
-            font-size: clamp(2.8rem, 4.5vw, 4.2rem);
+            font-size: clamp(2.2rem, 3.4vw, 3rem);
             font-weight: 900;
-            margin-bottom: 0.8rem;
-            letter-spacing: -2px;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1.5px;
             font-family: var(--font-mono);
             line-height: 1;
+            font-variant-numeric: tabular-nums;
         }
 
         .detail-text {
             font-family: var(--font-mono);
-            font-size: clamp(0.8rem, 1.3vw, 0.95rem);
+            font-size: clamp(0.72rem, 0.95vw, 0.82rem);
             font-weight: bold;
-            margin-top: 1.2rem;
+            margin-top: 0.8rem;
             background: var(--primary-black);
             color: white;
-            padding: 8px 12px;
+            padding: 6px 8px;
             border: 2px solid var(--primary-black);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             display: flex;
             justify-content: space-between;
+            font-variant-numeric: tabular-nums;
         }
 
         /* Fluid Progress Bars with Animated Stripes */
         .bar-container {
             width: 100%;
-            height: clamp(22px, 2.5vw, 32px);
+            height: clamp(16px, 1.8vw, 22px);
             background-color: white;
-            border: 3px solid var(--primary-black);
+            border: 2px solid var(--primary-black);
             overflow: hidden;
             position: relative;
         }
@@ -230,10 +245,9 @@
             background-color: var(--primary-green);
             width: 0%;
             transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.3s ease;
-            border-right: 3px solid var(--primary-black);
+            border-right: 2px solid var(--primary-black);
             position: relative;
             
-            /* Animated brutalist stripes */
             background-image: linear-gradient(
                 45deg, 
                 rgba(255,255,255,0.2) 25%, 
@@ -253,98 +267,142 @@
             100% { background-position: 1rem 0; }
         }
 
-        .bar-fill.temp {
-            background-color: var(--primary-green);
-        }
+        .bar-fill.temp { background-color: var(--primary-green); }
+        .bar-fill.temp.warn { background-color: var(--primary-amber); }
+        .bar-fill.temp.alert { background-color: var(--alert-red); }
+        .bar-fill.disk { background-color: #2979FF; }
 
-        .bar-fill.temp.warn {
-            background-color: var(--primary-amber);
-        }
-
-        .bar-fill.temp.alert {
-            background-color: var(--alert-red);
-        }
-
-        .bar-fill.disk {
-            background-color: #2979FF;
-        }
-
-        /* Data list styling for Sys Info */
+        /* Sys Info List */
         .sys-list {
             list-style: none;
             font-family: var(--font-mono);
-            font-size: clamp(0.95rem, 1.4vw, 1.15rem);
-            line-height: 2.1;
+            font-size: clamp(0.78rem, 1vw, 0.88rem);
+            line-height: 1.8;
+            font-variant-numeric: tabular-nums;
         }
         .sys-list span:first-child { 
             color: var(--primary-green); 
-            font-weight: 900; 
+            font-weight: 800; 
             display: inline-block;
-            width: 90px;
+            width: 72px;
         }
 
         /* --------------------------------------------------------- */
-        /* PM2 PROCESS HEALTH SECTION (AUTHENTIC NEO-BRUTALIST)      */
+        /* COLLAPSIBLE PM2 BRUTALIST TAB (COLLAPSED BY DEFAULT)     */
         /* --------------------------------------------------------- */
-        .pm2-section {
+        .pm2-accordion {
             width: 100%;
             background: var(--card-bg);
-            border: 4px solid var(--primary-black);
+            border: 3px solid var(--primary-black);
             border-radius: 0px;
-            box-shadow: 8px 8px 0px var(--primary-black);
-            padding: clamp(1.5rem, 3vw, 2.5rem);
-            margin-bottom: 2.5rem;
+            box-shadow: 5px 5px 0px var(--primary-black);
+            margin-bottom: 1.5rem;
+            transition: box-shadow 0.2s ease;
         }
 
-        .pm2-header {
+        .pm2-accordion:hover {
+            box-shadow: 7px 7px 0px var(--primary-green);
+        }
+
+        /* Interactive Collapsed Bar */
+        .pm2-accordion-bar {
+            padding: clamp(0.75rem, 1.4vh, 1rem) clamp(1rem, 2vw, 1.5rem);
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 3px solid var(--primary-black);
+            gap: 0.8rem;
+            cursor: pointer;
+            user-select: none;
+            background: white;
+            transition: background 0.15s ease;
         }
 
-        .pm2-title {
-            font-size: clamp(1.2rem, 2.2vw, 1.6rem);
-            font-family: var(--font-mono);
-            font-weight: 900;
+        .pm2-accordion-bar:hover {
+            background: #fafbfc;
+        }
+
+        .pm2-bar-left {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.8rem;
+        }
+
+        .pm2-bar-title {
+            font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+            font-family: var(--font-mono);
+            font-weight: 800;
             text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .summary-pills {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.6rem;
+            gap: 0.4rem;
         }
 
         .pill {
             font-family: var(--font-mono);
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             font-weight: 800;
-            padding: 5px 12px;
+            padding: 3px 8px;
             border: 2px solid var(--primary-black);
             border-radius: 0px;
             background: #fff;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            box-shadow: 2px 2px 0px var(--primary-black);
+            gap: 5px;
+            font-variant-numeric: tabular-nums;
         }
 
         .pill.online { background: #E8F5E9; border-color: var(--primary-green); color: #1B5E20; }
         .pill.stopped { background: #ECEFF1; border-color: #607D8B; color: #37474F; }
         .pill.errored { background: #FFEBEE; border-color: var(--alert-red); color: #B71C1C; }
 
-        /* Compact Scannable Table */
+        .btn-toggle-pm2 {
+            background: var(--primary-black);
+            color: white;
+            border: 2px solid var(--primary-black);
+            padding: 6px 12px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px var(--primary-green);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-toggle-pm2:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0px var(--primary-green);
+        }
+
+        /* Expandable Table Content Drawer */
+        .pm2-content-drawer {
+            display: none;
+            padding: 0 clamp(1rem, 2vw, 1.5rem) clamp(1rem, 2vw, 1.5rem);
+            border-top: 2px dashed #ccc;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .pm2-accordion.expanded .pm2-content-drawer {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .table-responsive {
             width: 100%;
             overflow-x: auto;
+            margin-top: 1rem;
         }
 
         table.pm2-table {
@@ -352,28 +410,28 @@
             border-collapse: separate;
             border-spacing: 0;
             font-family: var(--font-mono);
-            font-size: clamp(0.8rem, 1.2vw, 0.92rem);
+            font-size: clamp(0.75rem, 1vw, 0.88rem);
         }
 
         table.pm2-table th {
             text-align: left;
-            padding: 12px 14px;
+            padding: 10px 12px;
             background: #f1f3f5;
-            border-top: 3px solid var(--primary-black);
-            border-bottom: 3px solid var(--primary-black);
-            font-weight: 900;
-            font-size: 0.8rem;
+            border-top: 2px solid var(--primary-black);
+            border-bottom: 2px solid var(--primary-black);
+            font-weight: 800;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        table.pm2-table th:first-child { border-left: 3px solid var(--primary-black); }
-        table.pm2-table th:last-child { border-right: 3px solid var(--primary-black); }
+        table.pm2-table th:first-child { border-left: 2px solid var(--primary-black); }
+        table.pm2-table th:last-child { border-right: 2px solid var(--primary-black); }
 
         table.pm2-table td {
-            padding: 14px 14px;
-            border-bottom: 2px solid #e0e0e0;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
             vertical-align: middle;
+            font-variant-numeric: tabular-nums;
         }
 
         table.pm2-table tr:hover td {
@@ -383,39 +441,29 @@
 
         .status-dot-inline {
             display: inline-block;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             margin-right: 6px;
             vertical-align: middle;
         }
 
-        .status-dot-inline.online { background-color: var(--primary-green); box-shadow: 0 0 6px rgba(0, 200, 83, 0.8); }
+        .status-dot-inline.online { background-color: var(--primary-green); box-shadow: 0 0 5px rgba(0, 200, 83, 0.8); }
         .status-dot-inline.stopped { background-color: #9e9e9e; }
         .status-dot-inline.errored { background-color: var(--alert-red); }
 
         .badge-restart {
-            padding: 3px 8px;
+            padding: 2px 6px;
             border-radius: 0px;
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             font-weight: 800;
-            border: 2px solid #bbb;
+            border: 1px solid #bbb;
             background: #f5f5f5;
             display: inline-block;
         }
 
-        .badge-restart.warn {
-            background: #FFF3E0;
-            border-color: var(--primary-amber);
-            color: #E65100;
-        }
-
-        .badge-restart.alert {
-            background: #FFEBEE;
-            border: 2px solid var(--alert-red);
-            color: var(--alert-red);
-            animation: pulse-red 2s infinite;
-        }
+        .badge-restart.warn { background: #FFF3E0; border-color: var(--primary-amber); color: #E65100; }
+        .badge-restart.alert { background: #FFEBEE; border: 2px solid var(--alert-red); color: var(--alert-red); animation: pulse-red 2s infinite; }
 
         @keyframes pulse-red {
             0% { transform: scale(1); }
@@ -426,30 +474,25 @@
         .btn-inspect {
             background: white;
             border: 2px solid var(--primary-black);
-            padding: 6px 12px;
+            padding: 4px 8px;
             font-family: var(--font-mono);
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 800;
             cursor: pointer;
-            box-shadow: 3px 3px 0px var(--primary-black);
+            box-shadow: 2px 2px 0px var(--primary-black);
             transition: all 0.1s ease;
             text-transform: uppercase;
         }
 
         .btn-inspect:hover {
             transform: translate(-1px, -1px);
-            box-shadow: 4px 4px 0px var(--primary-black);
+            box-shadow: 3px 3px 0px var(--primary-black);
             background: var(--primary-green);
             color: white;
         }
 
-        .btn-inspect:active {
-            transform: translate(1px, 1px);
-            box-shadow: 1px 1px 0px var(--primary-black);
-        }
-
         /* --------------------------------------------------------- */
-        /* NEO-BRUTALIST DETAIL MODAL (SHARP 0PX GEOMETRY)          */
+        /* MODAL (SHARP 0PX)                                        */
         /* --------------------------------------------------------- */
         .modal-overlay {
             position: fixed;
@@ -463,23 +506,21 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            padding: 1.5rem;
+            padding: 1rem;
         }
 
-        .modal-overlay.active {
-            display: flex;
-        }
+        .modal-overlay.active { display: flex; }
 
         .modal-box {
             background: white;
-            border: 4px solid var(--primary-black);
+            border: 3px solid var(--primary-black);
             border-radius: 0px;
-            box-shadow: 12px 12px 0px var(--primary-black);
+            box-shadow: 8px 8px 0px var(--primary-black);
             width: 100%;
-            max-width: 620px;
-            padding: clamp(1.5rem, 3vw, 2.5rem);
+            max-width: 560px;
+            padding: clamp(1.2rem, 2.5vw, 2rem);
             position: relative;
-            animation: popIn 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            animation: popIn 0.18s cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
 
         @keyframes popIn {
@@ -491,45 +532,42 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 3px solid var(--primary-black);
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px solid var(--primary-black);
         }
 
         .modal-title {
-            font-size: 1.35rem;
+            font-size: 1.2rem;
             font-family: var(--font-mono);
-            font-weight: 900;
+            font-weight: 800;
             word-break: break-all;
         }
 
         .modal-close-btn {
             background: white;
             border: 2px solid var(--primary-black);
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: 900;
             cursor: pointer;
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 3px 3px 0px var(--primary-black);
+            box-shadow: 2px 2px 0px var(--primary-black);
             transition: all 0.1s ease;
-            margin-left: 1rem;
         }
 
         .modal-close-btn:hover {
             background: var(--alert-red);
             color: white;
-            transform: translate(-1px, -1px);
-            box-shadow: 4px 4px 0px var(--primary-black);
         }
 
         .modal-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
+            gap: 0.8rem;
             font-family: var(--font-mono);
         }
 
@@ -537,42 +575,31 @@
             background: #f8f9fa;
             border: 2px solid var(--primary-black);
             border-radius: 0px;
-            padding: 0.8rem 1rem;
+            padding: 0.6rem 0.8rem;
         }
 
         .modal-item .label {
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             color: #666;
             text-transform: uppercase;
             font-weight: 800;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .modal-item .val {
-            font-weight: 900;
-            font-size: 1.05rem;
+            font-weight: 800;
+            font-size: 0.95rem;
             word-break: break-all;
         }
 
-        /* Standalone notice */
-        .standalone-notice {
-            padding: 2rem;
-            border: 3px dashed var(--primary-black);
-            border-radius: 0px;
-            text-align: center;
-            font-family: var(--font-mono);
-            color: #555;
-            font-size: 0.95rem;
-            font-weight: bold;
-        }
-
-        /* Footer Return Link */
+        /* Footer Link */
         .footer-link {
             font-family: var(--font-mono); 
             font-weight: bold; 
-            margin-top: 3.5rem; 
+            margin-top: 1rem;
             opacity: 0.75; 
             text-transform: uppercase;
+            font-size: 0.85rem;
         }
 
         .footer-link a {
@@ -588,9 +615,27 @@
             opacity: 1;
         }
 
-        @media (max-width: 600px) {
+        /* --------------------------------------------------------- */
+        /* 9:16 MOBILE & VERTICAL VIEWPORTS                         */
+        /* --------------------------------------------------------- */
+        @media (max-width: 650px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
             .modal-grid {
                 grid-template-columns: 1fr;
+            }
+            .pm2-accordion-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .pm2-bar-left {
+                justify-content: space-between;
+            }
+            .btn-toggle-pm2 {
+                width: 100%;
+                text-align: center;
+                padding: 8px 12px;
             }
         }
     </style>
@@ -612,19 +657,19 @@
             <div class="hero-date" id="date-val">SYS_UPTIME: --</div>
         </div>
 
-        <!-- System Core Cards Grid -->
+        <!-- 16:9 AT-A-GLANCE 5-CARD GRID -->
         <div class="dashboard-grid">
             
             <!-- 1. CPU LOAD -->
             <div class="card">
                 <h2>// CPU_LOAD <span>[CORE]</span></h2>
                 <div>
-                    <div class="value-display"><span id="cpu-val">0.0</span>%</div>
+                    <div class="value-display"><span id="cpu-val">--</span>%</div>
                     <div class="bar-container">
                         <div class="bar-fill" id="cpu-bar"></div>
                     </div>
                     <div class="detail-text">
-                        <span>LOAD AVG:</span>
+                        <span>LOAD:</span>
                         <span id="load-val">-- -- --</span>
                     </div>
                 </div>
@@ -634,12 +679,12 @@
             <div class="card">
                 <h2>// RAM_USAGE <span>[MEM]</span></h2>
                 <div>
-                    <div class="value-display"><span id="ram-val">0.0</span>%</div>
+                    <div class="value-display"><span id="ram-val">--</span>%</div>
                     <div class="bar-container">
                         <div class="bar-fill" id="ram-bar"></div>
                     </div>
                     <div class="detail-text">
-                        <span>AVAIL / TOTAL:</span>
+                        <span>AVAIL:</span>
                         <span id="ram-details-val">-- / --</span>
                     </div>
                 </div>
@@ -647,14 +692,14 @@
 
             <!-- 3. THERMAL -->
             <div class="card temp-card">
-                <h2>// THERMAL <span id="sensor-tag">[ZONE0]</span></h2>
+                <h2>// THERMAL <span id="sensor-tag">[ZONE]</span></h2>
                 <div>
                     <div class="value-display"><span id="temp-val">--</span>°C</div>
                     <div class="bar-container">
                         <div class="bar-fill temp" id="temp-bar"></div>
                     </div>
                     <div class="detail-text">
-                        <span>SENSOR:</span>
+                        <span>ZONE:</span>
                         <span id="temp-sensor-name">AUTO</span>
                     </div>
                 </div>
@@ -662,14 +707,14 @@
 
             <!-- 4. STORAGE DISK -->
             <div class="card">
-                <h2>// STORAGE_DISK <span>[ROOT]</span></h2>
+                <h2>// STORAGE <span>[ROOT]</span></h2>
                 <div>
                     <div class="value-display"><span id="disk-val">--</span>%</div>
                     <div class="bar-container">
                         <div class="bar-fill disk" id="disk-bar"></div>
                     </div>
                     <div class="detail-text">
-                        <span>USED / TOTAL:</span>
+                        <span>USED:</span>
                         <span id="disk-details-val">-- / --</span>
                     </div>
                 </div>
@@ -688,48 +733,46 @@
 
         </div>
 
-        <!-- PM2 Process Health Section -->
-        <div class="pm2-section" id="pm2-section">
-            <div class="pm2-header">
-                <div class="pm2-title">
-                    <span>// PM2_PROCESS_HEALTH [SERVICES]</span>
+        <!-- COLLAPSIBLE PM2 BRUTALIST TAB (COLLAPSED BY DEFAULT) -->
+        <div class="pm2-accordion" id="pm2-accordion">
+            <div class="pm2-accordion-bar" id="pm2-toggle-bar">
+                <div class="pm2-bar-left">
+                    <div class="pm2-bar-title">
+                        <span>// PM2_SERVICES</span>
+                    </div>
+                    <div class="summary-pills" id="pm2-pills">
+                        <span class="pill" id="pill-total">TOTAL: 0</span>
+                        <span class="pill online" id="pill-online">0 ONLINE</span>
+                        <span class="pill stopped" id="pill-stopped">0 STOPPED</span>
+                        <span class="pill errored" id="pill-errored">0 ERR</span>
+                    </div>
                 </div>
-                <div class="summary-pills" id="pm2-pills">
-                    <span class="pill" id="pill-total">TOTAL: 0</span>
-                    <span class="pill online" id="pill-online">ONLINE: 0</span>
-                    <span class="pill stopped" id="pill-stopped">STOPPED: 0</span>
-                    <span class="pill errored" id="pill-errored">ERRORS: 0</span>
-                </div>
+                <button class="btn-toggle-pm2" id="btn-toggle-pm2">VIEW SERVICES [▼]</button>
             </div>
 
-            <div class="table-responsive" id="pm2-table-wrapper">
-                <table class="pm2-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>NAME</th>
-                            <th>STATUS</th>
-                            <th>RESTARTS</th>
-                            <th>CPU</th>
-                            <th>RAM</th>
-                            <th>UPTIME</th>
-                            <th style="text-align: right;">ACTION</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pm2-table-body">
-                        <tr>
-                            <td colspan="8" style="text-align: center; color: #888; padding: 2.5rem;">
-                                Waiting for PM2 telemetry stream...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="standalone-notice" id="pm2-standalone-notice" style="display: none;">
-                [PM2_MONITOR: STANDALONE MODE - NO PM2 DAEMON ACTIVE]
-                <div style="font-size: 0.85rem; margin-top: 6px; opacity: 0.85;">
-                    Hardware and system metrics are operating with zero dependency on PM2.
+            <div class="pm2-content-drawer" id="pm2-content-drawer">
+                <div class="table-responsive">
+                    <table class="pm2-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>NAME</th>
+                                <th>STATUS</th>
+                                <th>RESTARTS</th>
+                                <th>CPU</th>
+                                <th>RAM</th>
+                                <th>UPTIME</th>
+                                <th style="text-align: right;">ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pm2-table-body">
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: #888; padding: 1.5rem;">
+                                    Waiting for PM2 telemetry stream...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -802,10 +845,11 @@
         const connDot = document.getElementById('connection-dot');
         const badgeContainer = document.getElementById('badge-container');
 
-        // PM2 Elements
-        const pm2TableWrapper = document.getElementById('pm2-table-wrapper');
+        // PM2 Accordion Elements
+        const pm2Accordion = document.getElementById('pm2-accordion');
+        const pm2ToggleBar = document.getElementById('pm2-toggle-bar');
+        const btnTogglePm2 = document.getElementById('btn-toggle-pm2');
         const pm2TableBody = document.getElementById('pm2-table-body');
-        const pm2StandaloneNotice = document.getElementById('pm2-standalone-notice');
         const pillTotal = document.getElementById('pill-total');
         const pillOnline = document.getElementById('pill-online');
         const pillStopped = document.getElementById('pill-stopped');
@@ -826,8 +870,15 @@
 
         let currentProcesses = [];
 
+        // Toggle PM2 Collapsible Tab
+        function togglePm2Drawer() {
+            const isExpanded = pm2Accordion.classList.toggle('expanded');
+            btnTogglePm2.innerText = isExpanded ? 'COLLAPSE SERVICES [▲]' : 'VIEW SERVICES [▼]';
+        }
+        pm2ToggleBar.addEventListener('click', togglePm2Drawer);
+
         // -------------------------------------------------------------
-        // UI UPDATE PIPELINE
+        // UI UPDATE PIPELINE (JITTER-FREE & SMOOTH)
         // -------------------------------------------------------------
         function updateDashboard(data) {
             if (!data || typeof data !== 'object') return;
@@ -836,7 +887,6 @@
             if (data.time) {
                 const date = new Date(data.time);
                 timeVal.innerText = date.toLocaleTimeString('en-US', { hour12: false });
-                dateVal.innerText = date.toDateString();
             }
 
             // 2. CPU
@@ -877,7 +927,7 @@
                     tempVal.style.color = 'var(--primary-black)';
                 }
             } else {
-                tempVal.innerText = "N/A";
+                tempVal.innerText = "--";
                 tempBar.style.width = "0%";
             }
 
@@ -908,31 +958,33 @@
 
         function updatePm2Section(pm2) {
             if (!pm2 || pm2.available === false) {
-                pm2TableWrapper.style.display = 'none';
-                pm2StandaloneNotice.style.display = 'block';
                 pillTotal.innerText = 'TOTAL: 0';
-                pillOnline.innerText = 'ONLINE: 0';
-                pillStopped.innerText = 'STOPPED: 0';
-                pillErrored.innerText = 'ERRORS: 0';
+                pillOnline.innerText = '0 ONLINE';
+                pillStopped.innerText = '0 STOPPED';
+                pillErrored.innerText = '0 ERR';
+                pm2TableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #888; padding: 1.5rem;">
+                            No active PM2 services detected.
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
-            pm2TableWrapper.style.display = 'block';
-            pm2StandaloneNotice.style.display = 'none';
-
             const sum = pm2.summary || { total: 0, online: 0, stopped: 0, errored: 0 };
             pillTotal.innerText = `TOTAL: ${sum.total}`;
-            pillOnline.innerText = `ONLINE: ${sum.online}`;
-            pillStopped.innerText = `STOPPED: ${sum.stopped}`;
-            pillErrored.innerText = `ERRORS: ${sum.errored}`;
+            pillOnline.innerText = `${sum.online} ONLINE`;
+            pillStopped.innerText = `${sum.stopped} STOPPED`;
+            pillErrored.innerText = `${sum.errored} ERR`;
 
             currentProcesses = Array.isArray(pm2.processes) ? pm2.processes : [];
 
             if (currentProcesses.length === 0) {
                 pm2TableBody.innerHTML = `
                     <tr>
-                        <td colspan="8" style="text-align: center; color: #888; padding: 2rem;">
-                            No visible PM2 processes configured or active.
+                        <td colspan="8" style="text-align: center; color: #888; padding: 1.5rem;">
+                            No visible PM2 services configured.
                         </td>
                     </tr>
                 `;
@@ -965,7 +1017,7 @@
                         <td>${p.memoryMB !== undefined ? p.memoryMB + ' MB' : '--'}</td>
                         <td>${escapeHtml(p.uptime || '--')}</td>
                         <td style="text-align: right;">
-                            <button class="btn-inspect" onclick="event.stopPropagation(); openProcessModal(${idx})">INSPECT [→]</button>
+                            <button class="btn-inspect" onclick="event.stopPropagation(); openProcessModal(${idx})">DETAILS</button>
                         </td>
                     </tr>
                 `;
@@ -1057,7 +1109,7 @@
 
             connText.innerText = 'CONNECTING...';
             connDot.style.backgroundColor = '#9e9e9e';
-            badgeContainer.style.boxShadow = '4px 4px 0px #9e9e9e';
+            badgeContainer.style.boxShadow = '3px 3px 0px #9e9e9e';
 
             try {
                 ws = new WebSocket(targetUrl);
@@ -1067,11 +1119,10 @@
             }
 
             ws.onopen = () => {
-                console.log("WebSocket connected.");
                 reconnectDelay = 1500;
                 connText.innerText = 'LIVE_STREAM';
                 connDot.style.backgroundColor = 'var(--primary-green)';
-                badgeContainer.style.boxShadow = '4px 4px 0px var(--primary-green)';
+                badgeContainer.style.boxShadow = '3px 3px 0px var(--primary-green)';
             };
 
             ws.onmessage = (event) => {
@@ -1086,13 +1137,13 @@
             ws.onerror = (err) => {
                 connText.innerText = 'DISCONNECTED';
                 connDot.style.backgroundColor = 'var(--alert-red)';
-                badgeContainer.style.boxShadow = '4px 4px 0px var(--alert-red)';
+                badgeContainer.style.boxShadow = '3px 3px 0px var(--alert-red)';
             };
 
             ws.onclose = () => {
                 connText.innerText = 'RECONNECTING...';
                 connDot.style.backgroundColor = 'var(--primary-amber)';
-                badgeContainer.style.boxShadow = '4px 4px 0px var(--primary-amber)';
+                badgeContainer.style.boxShadow = '3px 3px 0px var(--primary-amber)';
                 scheduleReconnect();
             };
         }
