@@ -12,6 +12,6 @@
   "description": "",
   "dependencies": {
     "pm2": "^6.0.14",
-    "ws": "^8.19.0"
+    "ws": "^8.22.0"
   }
 }
