@@ -11,3 +11,4 @@ Real-time telemetry and WebSocket server for monitoring server metrics (CPU load
 npm install
 npm start
 ```
+
