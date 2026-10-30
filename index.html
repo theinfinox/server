@@ -989,19 +989,14 @@
 
     <script>
         // -------------------------------------------------------------
-        // THEME MANAGEMENT (NEO-BRUTALIST DARK / LIGHT)
+        // THEME MANAGEMENT (DEFAULT: WHITE / LIGHT, REMEMBERS CHOICE)
         // -------------------------------------------------------------
         const themeBtn = document.getElementById('theme-btn');
         
         function initTheme() {
             const savedTheme = localStorage.getItem('picloud_theme');
+            // Default to WHITE theme unless user explicitly chose dark
             if (savedTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                themeBtn.innerText = 'LIGHT';
-            } else if (savedTheme === 'light') {
-                document.body.classList.remove('dark-mode');
-                themeBtn.innerText = 'DARK';
-            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                 document.body.classList.add('dark-mode');
                 themeBtn.innerText = 'LIGHT';
             } else {
