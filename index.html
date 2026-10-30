@@ -91,37 +91,38 @@
         /* Responsive Dashboard Container */
         .dashboard-wrapper {
             width: 100%;
-            max-width: 1560px;
+            max-width: 1360px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        /* Header & Live Indicator */
+        /* Header & Live Indicator (Generous Spacing) */
         header { 
             text-align: center; 
-            margin-bottom: clamp(0.8rem, 1.8vh, 1.4rem); 
+            margin-bottom: clamp(1.2rem, 2.4vh, 2.2rem); 
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.6rem;
+            gap: clamp(1.1rem, 2vh, 1.8rem);
         }
         
         .header-controls {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
         h1 {
-            font-size: clamp(1.8rem, 3.8vw, 3rem);
+            font-size: clamp(2rem, 3.8vw, 3.4rem);
             letter-spacing: -0.5px;
             font-family: var(--font-cursive);
             font-weight: 400;
             font-style: normal;
-            line-height: 1;
+            line-height: 1.1;
+            margin-top: 0.2rem;
             color: var(--primary-black);
         }
 
@@ -130,11 +131,11 @@
             align-items: center;
             gap: 8px;
             font-family: var(--font-mono);
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             font-weight: 700;
             background: var(--badge-bg);
             color: var(--badge-text);
-            padding: 6px 14px;
+            padding: 7px 16px;
             border-radius: 0px;
             border: 3px solid var(--border-color);
             box-shadow: 3px 3px 0px var(--primary-green);
@@ -150,11 +151,11 @@
 
         .theme-btn {
             font-family: var(--font-mono);
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             font-weight: 800;
             background: var(--card-bg);
             color: var(--primary-black);
-            padding: 6px 14px;
+            padding: 7px 16px;
             border-radius: 0px;
             border: 3px solid var(--border-color);
             box-shadow: 3px 3px 0px var(--border-color);
@@ -186,13 +187,13 @@
         /* HERO CLOCK */
         .hero-clock-container {
             text-align: center;
-            margin-bottom: clamp(0.9rem, 2vh, 1.8rem);
+            margin-bottom: clamp(1.2rem, 2.5vh, 2.2rem);
             width: 100%;
         }
 
         .hero-clock {
             font-family: var(--font-mono);
-            font-size: clamp(2.4rem, 5.5vw, 4.6rem); 
+            font-size: clamp(2.6rem, 6vw, 5rem); 
             font-weight: 900;
             line-height: 1;
             letter-spacing: -1.5px;
@@ -219,39 +220,32 @@
         }
 
         /* --------------------------------------------------------- */
-        /* RESPONSIVE 6-CARD GRID                                    */
+        /* RESPONSIVE BALANCED GRID (PROPORTIONAL ACROSS ALL SCREENS)*/
         /* --------------------------------------------------------- */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: clamp(0.75rem, 1.4vw, 1.3rem);
+            grid-template-columns: repeat(3, 1fr);
+            gap: clamp(1rem, 1.6vw, 1.6rem);
             width: 100%;
-            margin-bottom: clamp(1rem, 2vh, 1.6rem);
+            margin-bottom: clamp(1.2rem, 2.2vh, 1.8rem);
         }
 
-        /* Ultra-wide (>=1400px): Panoramic 6-card row */
-        @media (min-width: 1400px) {
-            .dashboard-grid {
-                grid-template-columns: repeat(6, 1fr);
-            }
-        }
-
-        /* 950px - 1399px (Standard 1080p & Laptops): Perfect 3x2 grid */
-        @media (min-width: 950px) and (max-width: 1399px) {
+        /* Desktop & Tablet Landscape (>= 920px): Balanced 3x2 Grid */
+        @media (min-width: 920px) {
             .dashboard-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
 
-        /* 650px - 949px (Tablets): 2x3 grid */
-        @media (min-width: 650px) and (max-width: 949px) {
+        /* Tablet Portrait (680px - 919px): Balanced 2x3 Grid */
+        @media (min-width: 680px) and (max-width: 919px) {
             .dashboard-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
 
-        /* <650px (Mobile): Single column stack */
-        @media (max-width: 649px) {
+        /* Mobile Phones (< 680px): Single Column Stack */
+        @media (max-width: 679px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
@@ -262,13 +256,13 @@
             background: var(--card-bg);
             border: 3px solid var(--border-color);
             border-radius: 0px;
-            padding: clamp(0.9rem, 1.6vw, 1.3rem);
+            padding: clamp(1rem, 1.8vw, 1.4rem);
             box-shadow: 5px 5px 0px var(--border-color);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            min-height: 180px;
+            min-height: 195px;
             cursor: pointer;
             user-select: none;
         }
@@ -330,11 +324,11 @@
         .net-arrow-down { color: var(--primary-green); font-weight: 900; }
         .net-arrow-up { color: var(--primary-blue); font-weight: 900; }
 
-        /* Embedded 22px Slim Micro-Sparkline */
+        /* Embedded 26px Slim Micro-Sparkline */
         .sparkline-box {
             width: 100%;
-            height: 22px;
-            margin: 6px 0;
+            height: 26px;
+            margin: 8px 0;
             overflow: hidden;
             display: flex;
             align-items: flex-end;
@@ -1166,7 +1160,15 @@
 
             const resolvedSensor = data.tempType || data.tempSensor;
             if (resolvedSensor) {
-                sensorTag.innerText = `[${resolvedSensor.toUpperCase()}]`;
+                let tagText = resolvedSensor.toUpperCase();
+                if (tagText.includes('PKG') || tagText.includes('CPU')) {
+                    tagText = 'CPU_PKG';
+                } else if (tagText.includes('ACPI')) {
+                    tagText = 'ACPI';
+                } else if (tagText.length > 9) {
+                    tagText = tagText.substring(0, 9);
+                }
+                sensorTag.innerText = `[${tagText}]`;
                 tempSensorName.innerText = resolvedSensor.toUpperCase();
             }
 
