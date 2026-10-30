@@ -76,6 +76,21 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        /* Cross-browser Invisible Scrollbar (Maintains 100% full scrolling capability) */
+        html {
+            overflow-y: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and legacy Edge */
+        }
+
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Edge, Opera, Brave */
+            width: 0px;
+            height: 0px;
+            background: transparent;
+        }
+
         body {
             background-color: var(--bg-color);
             font-family: var(--font-main);
@@ -84,8 +99,11 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: clamp(0.75rem, 2vh, 1.8rem) clamp(0.75rem, 3vw, 2rem);
+            min-height: 100dvh;
+            padding: clamp(0.6rem, 1.8vh, 1.6rem) clamp(0.75rem, 3vw, 2rem);
             transition: background-color 0.2s ease, color 0.2s ease;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         /* Responsive Dashboard Container */
@@ -600,6 +618,14 @@
         .table-responsive {
             width: 100%;
             overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .table-responsive::-webkit-scrollbar {
+            display: none;
+            width: 0px;
+            height: 0px;
         }
 
         .pm2-table {
@@ -710,6 +736,14 @@
             animation: popIn 0.18s cubic-bezier(0.18, 0.89, 0.32, 1.28);
             max-height: 90vh;
             overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .modal-box::-webkit-scrollbar {
+            display: none;
+            width: 0px;
+            height: 0px;
         }
 
         @keyframes popIn {
