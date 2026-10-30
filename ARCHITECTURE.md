@@ -150,7 +150,7 @@ sequenceDiagram
 4. **Strict Frame Size Cap:** Incoming WebSocket frames are clamped to `1024 bytes` (`maxPayload: 1024`). Any malformed buffer flooding attempt is dropped before JSON deserialization.
 
 ### Pillar 2: Cryptographic Gate & Zero Plaintext Footprint
-1. **Salted HMAC-SHA256 Storage:** Plaintext keys are never stored on disk. `.auth-lock.json` stores a cryptographically generated 16-byte random salt and HMAC-SHA256 digest. If a plaintext key is ever provided in the file, it is automatically hashed and wiped from disk on boot.
+1. **Salted HMAC-SHA256 Storage:** Plaintext keys are never stored on disk. `.auth-lock.json` stores a cryptographically generated 16-byte random salt and HMAC-SHA256 digest. If a plaintext key is ever provided in the file, it is automatically hashed and wiped from disk on boot. *(See `.auth-lock.sample.json` in the repository root for template configuration).*
 2. **Timing-Attack Immunity (`crypto.timingSafeEqual`):** Comparisons between client candidate hashes and stored digests are executed in strict constant time, completely preventing microsecond side-channel analysis from deriving characters.
 3. **3-Strike Hard Lockout:** Three consecutive failed authentication attempts from any IP enforce a 30-minute hard cooldown. Expired lockout records are automatically purged via background garbage collection.
 

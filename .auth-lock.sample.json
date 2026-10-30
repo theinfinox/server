@@ -1,0 +1,6 @@
+{
+  "_comment": "To set up access control, copy this file to .auth-lock.json and set your desired password in 'key'.",
+  "enabled": true,
+  "key": "your_secure_password_here",
+  "description": "On server startup, server.js will automatically convert this plaintext 'key' into a cryptographically secure salted HMAC-SHA256 hash and wipe the plaintext key from disk."
+}
