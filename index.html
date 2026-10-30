@@ -753,7 +753,7 @@
                     <div class="val" id="m-name">--</div>
                 </div>
                 <div class="modal-item">
-                    <div class="label">PM2 ID & PID</div>
+                    <div class="label">PM2 Instance ID</div>
                     <div class="val" id="m-ids">--</div>
                 </div>
                 <div class="modal-item">
@@ -983,7 +983,7 @@
 
             modalTitle.innerText = `// PROCESS: ${proc.name.toUpperCase()}`;
             mName.innerText = proc.name;
-            mIds.innerText = `PM2 ID: #${proc.id} | PID: ${proc.pid || 'N/A'}`;
+            mIds.innerText = `PM2 ID: #${proc.id}`;
             mStatus.innerHTML = `<span class="status-dot-inline ${proc.status}"></span>${proc.status.toUpperCase()}`;
             mStatus.style.color = proc.status === 'online' ? 'var(--primary-green)' : (proc.status === 'errored' ? 'var(--alert-red)' : '#666');
             
@@ -993,7 +993,7 @@
             mRam.innerText = `${proc.memoryMB} MB`;
             mCpu.innerText = `${proc.cpu}%`;
             mUptime.innerText = proc.uptime;
-            mMode.innerText = `${proc.mode} mode ${proc.nodeVersion ? `(Node ${proc.nodeVersion})` : ''}`;
+            mMode.innerText = `${proc.mode} mode`;
 
             processModal.classList.add('active');
         }

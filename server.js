@@ -12,16 +12,80 @@ try {
 
 const PORT = process.env.PORT || 3051;
 const CONFIG_FILE = path.join(__dirname, 'pm2-config.json');
+const MAX_TOTAL_CLIENTS = 100;
+const MAX_CLIENTS_PER_IP = 10;
 
-// Start WebSocket server
-const wss = new WebSocket.Server({ port: PORT });
-console.log(`WebSocket Server running on ws://0.0.0.0:${PORT}`);
+// Allowed Origins (Domain Protection against Cross-Site Hijacking)
+const ALLOWED_ORIGIN_PATTERNS = [
+    /^https?:\/\/info\.govindsr\.me$/i,
+    /^https?:\/\/govindsr\.me$/i,
+    /^https?:\/\/serverws\.govindsr\.me$/i,
+    /^https?:\/\/.*\.pages\.dev$/i,
+    /^https?:\/\/localhost(:\d+)?$/i,
+    /^https?:\/\/127\.0\.0\.1(:\d+)?$/i,
+    /^https?:\/\/192\.168\.\d+\.\d+(:\d+)?$/i,
+    /^https?:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/i,
+    /^https?:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+(:\d+)?$/i
+];
+
+function getClientIp(req) {
+    const forwarded = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'];
+    if (forwarded) {
+        return forwarded.split(',')[0].trim();
+    }
+    return req.socket ? req.socket.remoteAddress : 'unknown';
+}
+
+function verifyClient(info, callback) {
+    const origin = info.origin || info.req.headers.origin;
+
+    // 1. Origin verification (if Origin header present)
+    if (origin) {
+        const isAllowed = ALLOWED_ORIGIN_PATTERNS.some(pattern => pattern.test(origin));
+        if (!isAllowed) {
+            console.warn(`[Security] Rejected WebSocket connection from unauthorized origin: ${origin}`);
+            return callback(false, 403, 'Forbidden: Unauthorized Origin');
+        }
+    }
+
+    // 2. Global connection limit
+    if (wss.clients && wss.clients.size >= MAX_TOTAL_CLIENTS) {
+        console.warn(`[Security] Connection rejected: Global limit reached (${MAX_TOTAL_CLIENTS})`);
+        return callback(false, 503, 'Service Unavailable: Server at capacity');
+    }
+
+    // 3. Per-IP connection limit
+    const clientIp = getClientIp(info.req);
+    let ipCount = 0;
+    if (wss.clients) {
+        for (const client of wss.clients) {
+            if (client.clientIp === clientIp && client.readyState === WebSocket.OPEN) {
+                ipCount++;
+            }
+        }
+    }
+
+    if (ipCount >= MAX_CLIENTS_PER_IP) {
+        console.warn(`[Security] Connection rejected: Too many connections from IP ${clientIp}`);
+        return callback(false, 429, 'Too Many Requests: Connection limit per IP exceeded');
+    }
+
+    callback(true);
+}
+
+// Start WebSocket server with DoS protections
+const wss = new WebSocket.Server({
+    port: PORT,
+    maxPayload: 1024, // 1 KB max payload protects against buffer overflow attacks
+    verifyClient: verifyClient
+});
+
+console.log(`[Security] WebSocket Server running on ws://0.0.0.0:${PORT} with Origin whitelisting & DoS guard`);
 
 // -------------------------------------------------------------
-// 1. THERMAL SENSOR AUTO-RESOLVER
+// 1. THERMAL SENSOR AUTO-RESOLVER (MASKED)
 // -------------------------------------------------------------
-let cachedThermalSensor = undefined; // undefined: not scanned yet, null: not found
-let cachedSensorType = null;
+let cachedThermalSensor = undefined;
 
 function resolveThermalSensor() {
     if (cachedThermalSensor !== undefined) {
@@ -47,31 +111,22 @@ function resolveThermalSensor() {
                 }
             }
 
-            // Find by priority
             for (const prio of priorityTypes) {
                 const match = candidates.find(c => c.type.includes(prio));
                 if (match) {
                     cachedThermalSensor = match.tempPath;
-                    cachedSensorType = match.type;
-                    console.log(`[Thermal] Auto-resolved primary CPU sensor: ${match.tempPath} (${match.type})`);
                     return cachedThermalSensor;
                 }
             }
 
-            // Fallback to first available candidate
             if (candidates.length > 0) {
                 cachedThermalSensor = candidates[0].tempPath;
-                cachedSensorType = candidates[0].type;
-                console.log(`[Thermal] Fallback thermal sensor: ${candidates[0].tempPath} (${candidates[0].type})`);
                 return cachedThermalSensor;
             }
         }
-    } catch (err) {
-        console.warn('[Thermal] Sensor scan warning:', err.message);
-    }
+    } catch (err) {}
 
     cachedThermalSensor = null;
-    cachedSensorType = null;
     return null;
 }
 
@@ -90,7 +145,7 @@ function getCpuTemp() {
 }
 
 // -------------------------------------------------------------
-// 2. ACCURATE SYSTEM METRICS (CPU, MEMORY, STORAGE)
+// 2. ACCURATE SYSTEM METRICS
 // -------------------------------------------------------------
 function getCpuLoad() {
     const cpus = os.cpus();
@@ -135,7 +190,6 @@ function getMemoryMetrics() {
         }
     } catch (e) {}
 
-    // Fallback for non-Linux or on error
     const total = os.totalmem();
     const free = os.freemem();
     const used = total - free;
@@ -157,9 +211,8 @@ function getDiskMetrics() {
             if (totalBytes > 0) {
                 const usedPercent = (usedBytes / totalBytes) * 100;
                 return {
-                    totalGB: parseFloat((totalBytes / 1e9).toFixed(1)),
-                    usedGB: parseFloat((usedBytes / 1e9).toFixed(1)),
-                    freeGB: parseFloat((freeBytes / 1e9).toFixed(1)),
+                    totalGB: Math.round(totalBytes / 1e9),
+                    usedGB: Math.round(usedBytes / 1e9),
                     usedPercent: parseFloat(usedPercent.toFixed(1))
                 };
             }
@@ -188,7 +241,7 @@ function formatDuration(ms) {
 }
 
 // -------------------------------------------------------------
-// 3. PM2 CONFIG MANAGER (AUTO-POPULATE & PRESERVE USER CHOICE)
+// 3. PM2 CONFIG MANAGER (PRESERVE USER CHOICES)
 // -------------------------------------------------------------
 function syncPm2Config(discoveredProcessNames) {
     let config = {
@@ -205,17 +258,13 @@ function syncPm2Config(discoveredProcessNames) {
                 config = parsed;
             }
         }
-    } catch (err) {
-        console.warn('[PM2 Config] Failed to read config file, keeping defaults:', err.message);
-    }
+    } catch (err) {}
 
     if (!config.processes) config.processes = {};
 
     let hasChanges = false;
     for (const name of discoveredProcessNames) {
         if (name && config.processes[name] === undefined) {
-            // New process discovered! Auto-populate:
-            // Hide host monitoring process 'server-stats' by default; all others default to visible
             const isSelf = name.toLowerCase() === 'server-stats';
             config.processes[name] = {
                 visible: !isSelf,
@@ -225,7 +274,6 @@ function syncPm2Config(discoveredProcessNames) {
                 config.processes[name].note = "Host server process (hidden by default)";
             }
             hasChanges = true;
-            console.log(`[PM2 Config] Auto-populated new process: "${name}" (visible: ${!isSelf})`);
         }
     }
 
@@ -234,12 +282,9 @@ function syncPm2Config(discoveredProcessNames) {
             const tempFile = `${CONFIG_FILE}.tmp`;
             fs.writeFileSync(tempFile, JSON.stringify(config, null, 2), 'utf8');
             fs.renameSync(tempFile, CONFIG_FILE);
-        } catch (writeErr) {
-            console.error('[PM2 Config] Failed to atomically write config file:', writeErr.message);
-        }
+        } catch (writeErr) {}
     }
 
-    // Build fast lookup map for visibility
     const visibilityMap = {};
     for (const [key, val] of Object.entries(config.processes)) {
         if (typeof val === 'boolean') {
@@ -254,7 +299,7 @@ function syncPm2Config(discoveredProcessNames) {
 }
 
 // -------------------------------------------------------------
-// 4. DECOUPLED PM2 HEALTH WORKER
+// 4. SANITIZED PM2 HEALTH MONITOR
 // -------------------------------------------------------------
 let pm2State = {
     available: false,
@@ -294,7 +339,6 @@ function pollPm2List() {
     pm2.list((err, list) => {
         isPm2Polling = false;
         if (err) {
-            console.warn('[PM2] List error, resetting connection:', err.message);
             isPm2Connected = false;
             pm2State.available = false;
             return;
@@ -305,16 +349,14 @@ function pollPm2List() {
             const names = list.map(p => p.name).filter(Boolean);
             const visibilityMap = syncPm2Config(names);
 
-            const filteredProcesses = [];
+            const sanitizedProcesses = [];
             let total = 0, online = 0, stopped = 0, errored = 0;
 
             for (const p of list) {
                 const name = p.name || 'unnamed';
-                const isVisible = visibilityMap[name] !== false; // defaults to true unless explicitly false
+                const isVisible = visibilityMap[name] !== false;
 
-                if (!isVisible) {
-                    continue; // Skipped per user configuration
-                }
+                if (!isVisible) continue;
 
                 total++;
                 const status = (p.pm2_env && p.pm2_env.status) ? p.pm2_env.status.toLowerCase() : 'unknown';
@@ -327,24 +369,22 @@ function pollPm2List() {
                 const cpuPercent = (p.monit && typeof p.monit.cpu === 'number') ? p.monit.cpu : 0;
                 const uptimeMs = (p.pm2_env && p.pm2_env.pm_uptime) ? (now - p.pm2_env.pm_uptime) : 0;
 
-                filteredProcesses.push({
+                // CRITICAL SECURITY HARDENING:
+                // Omit internal OS PIDs, internal script paths, and exact node versions
+                sanitizedProcesses.push({
                     id: p.pm_id !== undefined ? p.pm_id : null,
                     name: name,
                     status: status,
                     uptime: formatDuration(uptimeMs),
-                    uptimeMs: (p.pm2_env && p.pm2_env.pm_uptime) || 0,
                     restarts: restarts,
                     restartAlert: restarts > 10,
                     memoryMB: parseFloat((memoryBytes / (1024 * 1024)).toFixed(1)),
                     cpu: parseFloat(cpuPercent.toFixed(1)),
-                    mode: (p.pm2_env && p.pm2_env.exec_mode) || 'fork',
-                    pid: p.pid || null,
-                    nodeVersion: (p.pm2_env && p.pm2_env.node_version) || null
+                    mode: (p.pm2_env && p.pm2_env.exec_mode) || 'fork'
                 });
             }
 
-            // Sort: online first, then by name
-            filteredProcesses.sort((a, b) => {
+            sanitizedProcesses.sort((a, b) => {
                 if (a.status === 'online' && b.status !== 'online') return -1;
                 if (a.status !== 'online' && b.status === 'online') return 1;
                 return a.name.localeCompare(b.name);
@@ -353,7 +393,7 @@ function pollPm2List() {
             pm2State = {
                 available: true,
                 summary: { total, online, stopped, errored },
-                processes: filteredProcesses
+                processes: sanitizedProcesses
             };
         } catch (procErr) {
             console.error('[PM2] Processing error:', procErr.message);
@@ -361,72 +401,92 @@ function pollPm2List() {
     });
 }
 
-// Poll PM2 every 2.5 seconds in background
 if (pm2) {
     connectAndPollPm2();
     setInterval(connectAndPollPm2, 2500);
 }
 
 // -------------------------------------------------------------
-// 5. CLIENT CONNECTION & 1-SECOND TELEMETRY BROADCAST
+// 5. HIGH-EFFICIENCY SINGLE-TICK BROADCAST ENGINE (O(1))
 // -------------------------------------------------------------
 let startMeasure = getCpuLoad();
 
-wss.on('connection', (ws) => {
-    console.log("New dashboard client connected.");
+// Centralized 1-second broadcast loop (never spikes CPU regardless of client count)
+setInterval(() => {
+    if (!wss.clients || wss.clients.size === 0) return;
 
-    const interval = setInterval(() => {
-        // 1. Calculate Real CPU %
-        const endMeasure = getCpuLoad();
-        const idleDifference = endMeasure.idle - startMeasure.idle;
-        const totalDifference = endMeasure.total - startMeasure.total;
-        const cpuPercentage = totalDifference > 0 
-            ? Math.min(100, Math.max(0, 100 - ~~(100 * idleDifference / totalDifference)))
-            : 0;
-        startMeasure = endMeasure;
+    // 1. Calculate Real CPU %
+    const endMeasure = getCpuLoad();
+    const idleDifference = endMeasure.idle - startMeasure.idle;
+    const totalDifference = endMeasure.total - startMeasure.total;
+    const cpuPercentage = totalDifference > 0 
+        ? Math.min(100, Math.max(0, 100 - ~~(100 * idleDifference / totalDifference)))
+        : 0;
+    startMeasure = endMeasure;
 
-        // 2. Memory & Disk
-        const mem = getMemoryMetrics();
-        const disk = getDiskMetrics();
+    // 2. Memory & Disk
+    const mem = getMemoryMetrics();
+    const disk = getDiskMetrics();
 
-        // 3. Compose Payload (100% backward-compatible + additive fields)
-        const payload = {
-            // Backward-compatible original keys
-            cpu: cpuPercentage,
-            ram: parseFloat(mem.percent.toFixed(1)),
-            time: new Date().toISOString(),
-            temp: getCpuTemp(),
-            loadAvg: os.loadavg().map(load => load.toFixed(2)),
-            uptime: formatUptime(os.uptime()),
-            osDetails: `${os.type()} ${os.release()}`,
-            architecture: os.arch(),
+    // 3. Compose Sanitized Payload (Masked Kernel, No PIDs)
+    const payload = {
+        cpu: cpuPercentage,
+        ram: parseFloat(mem.percent.toFixed(1)),
+        time: new Date().toISOString(),
+        temp: getCpuTemp(),
+        loadAvg: os.loadavg().map(load => load.toFixed(2)),
+        uptime: formatUptime(os.uptime()),
 
-            // Additive hardware & environment metrics
-            hostname: os.hostname(),
-            tempSensor: cachedSensorType,
-            ramDetails: {
-                totalMB: mem.totalMB,
-                usedMB: mem.usedMB,
-                availableMB: mem.availableMB
-            },
-            disk: disk,
+        // SECURITY MASKING: Generalized OS without exposing exact kernel CVE target
+        osDetails: os.type() === 'Linux' ? 'Linux' : `${os.type()}`,
+        architecture: os.arch(),
+        hostname: 'PiCloud',
 
-            // PM2 health & process matrix
-            pm2: pm2State
-        };
+        ramDetails: {
+            totalMB: mem.totalMB,
+            usedMB: mem.usedMB,
+            availableMB: mem.availableMB
+        },
+        disk: disk,
+        pm2: pm2State
+    };
 
-        if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify(payload));
+    const message = JSON.stringify(payload);
+
+    // Broadcast to all active clients in one go
+    for (const client of wss.clients) {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
         }
-    }, 1000);
+    }
+}, 1000);
 
-    ws.on('close', () => {
-        clearInterval(interval);
-        console.log("Client disconnected.");
+// Heartbeat interval to detect dead sockets & prevent file-descriptor leaks
+const heartbeatInterval = setInterval(() => {
+    for (const ws of wss.clients) {
+        if (ws.isAlive === false) {
+            ws.terminate();
+            continue;
+        }
+        ws.isAlive = false;
+        ws.ping();
+    }
+}, 30000);
+
+wss.on('close', () => {
+    clearInterval(heartbeatInterval);
+});
+
+// Client connection listener
+wss.on('connection', (ws, req) => {
+    ws.isAlive = true;
+    ws.clientIp = getClientIp(req);
+
+    ws.on('pong', () => {
+        ws.isAlive = true;
     });
 
     ws.on('error', (err) => {
-        clearInterval(interval);
-        console.warn("Client socket error:", err.message);
+        console.warn(`[Client] Socket error from ${ws.clientIp}:`, err.message);
     });
 });
