@@ -524,6 +524,21 @@ function formatDuration(ms) {
     return `${minutes}m`;
 }
 
+// Mask process names by replacing ~50% of characters in the middle with asterisks
+function maskProcessName(name) {
+    if (!name || typeof name !== 'string') return '***';
+    const len = name.length;
+    if (len <= 1) return '*';
+    if (len === 2) return name[0] + '*';
+    if (len === 3) return name[0] + '*' + name[2];
+    if (len === 4) return name[0] + '**' + name[3];
+
+    const maskCount = Math.max(2, Math.floor(len * 0.5));
+    const keepStart = Math.floor((len - maskCount) / 2);
+    const keepEnd = len - maskCount - keepStart;
+    return name.slice(0, keepStart) + '*'.repeat(maskCount) + name.slice(len - keepEnd);
+}
+
 // -------------------------------------------------------------
 // 3. PM2 CONFIG MANAGER (PRESERVE USER CHOICES)
 // -------------------------------------------------------------
@@ -720,12 +735,12 @@ setInterval(() => {
     // 3. Compose Sanitized Public Payload (Zero private leaks)
     const publicPayload = {
         cpu: cpuPercentage,
-        cpuModel: CPU_MODEL,
+        cpuModel: 'x86_64 Multi-Core Processor', // MASKED
         cores: CPU_CORES,
         ram: parseFloat(mem.percent.toFixed(1)),
         time: new Date().toISOString(),
         temp: tempObj.temp,
-        tempType: tempObj.type,
+        tempType: 'CPU_PKG', // MASKED
         loadAvg: os.loadavg().map(load => load.toFixed(2)),
         uptime: formatUptime(os.uptime()),
         osDetails: 'Linux', // MASKED
@@ -738,19 +753,35 @@ setInterval(() => {
         },
         disk: disk,
         network: net ? {
-            interface: net.interface,
+            interface: 'UPLINK', // MASKED
             rxFormatted: net.rxFormatted,
             txFormatted: net.txFormatted,
             totalRxFormatted: net.totalRxFormatted,
             totalTxFormatted: net.totalTxFormatted
         } : null,
-        pm2: pm2State,
+        pm2: {
+            available: pm2State.available,
+            summary: pm2State.summary,
+            processes: pm2State.processes.map(p => ({
+                id: null, // MASKED PM2 ID
+                name: maskProcessName(p.name), // MASKED MIDDLE HALF WITH *
+                status: p.status,
+                uptime: p.uptime,
+                restarts: null, // MASKED
+                restartAlert: false,
+                memoryMB: p.memoryMB,
+                cpu: p.cpu,
+                mode: null // MASKED
+            }))
+        },
         authTier: 'public'
     };
 
     // 4. Compose Privileged Payload (Only sent to authenticated admin sockets)
     const privilegedPayload = {
         ...publicPayload,
+        cpuModel: CPU_MODEL, // UNMASKED
+        tempType: tempObj.type, // UNMASKED
         osDetails: `${os.type()} ${os.release()} (${os.arch()})`, // UNMASKED
         hostname: os.hostname(), // UNMASKED
         ramDetails: {
@@ -764,9 +795,11 @@ setInterval(() => {
         thermalDetails: thermalList, // UNMASKED
         network: net ? {
             ...net,
+            interface: net.interface, // UNMASKED
             rxPackets: net.rxPackets,
             txPackets: net.txPackets
         } : null,
+        pm2: pm2State, // UNMASKED (Real IDs, full names, restart counts, execution modes)
         authTier: 'privileged',
         authVerified: true
     };

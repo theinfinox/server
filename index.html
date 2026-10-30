@@ -1083,7 +1083,7 @@
 
             <!-- 5. NETWORK THROUGHPUT -->
             <div class="card net-card" id="card-net" data-modal="net" title="Click to inspect Network traffic">
-                <h2>// NETWORK <span id="net-iface">[ENO1]</span></h2>
+                <h2>// NETWORK <span id="net-iface">[UPLINK]</span></h2>
                 <div>
                     <div class="value-display net-display">
                         <span class="net-arrow-down">↓</span> <span id="net-rx-val">-- B/s</span>
@@ -1590,18 +1590,25 @@
                 const statusClass = p.status === 'online' ? 'online' : (p.status === 'errored' ? 'errored' : 'stopped');
                 
                 let restartClass = 'badge-restart';
-                let restartText = `${p.restarts || 0}`;
-                if (p.restarts > 10) {
+                let restartText = '';
+                if (p.restarts === null || p.restarts === undefined) {
+                    restartText = '🔒';
+                } else if (p.restarts > 10) {
                     restartClass += ' alert';
                     restartText = `⚠ ${p.restarts}`;
                 } else if (p.restarts > 0) {
                     restartClass += ' warn';
+                    restartText = `${p.restarts}`;
+                } else {
+                    restartText = `${p.restarts}`;
                 }
+
+                const idDisplay = (p.id !== null && p.id !== undefined) ? `#${p.id}` : '<span style="opacity: 0.6;" title="Masked in Public Tier">🔒</span>';
 
                 rowsHtml += `
                     <tr onclick="openProcessModal(${idx})">
-                        <td style="font-weight: 700;">#${p.id !== null ? p.id : '-'}</td>
-                        <td style="font-weight: 900; color: var(--primary-black);">${escapeHtml(p.name)}</td>
+                        <td style="font-weight: 700;">${idDisplay}</td>
+                        <td style="font-weight: 900; color: var(--primary-black); font-family: var(--font-mono);">${escapeHtml(p.name)}</td>
                         <td>
                             <span class="status-dot-inline ${statusClass}"></span>
                             <span style="font-weight: 800; text-transform: uppercase;">${escapeHtml(p.status)}</span>
@@ -1627,15 +1634,17 @@
             const proc = currentProcesses[index];
             if (!proc) return;
 
+            const isPrivileged = lastPayload && lastPayload.authTier === 'privileged';
+
             modalTitle.innerText = `// PROCESS: ${proc.name.toUpperCase()}`;
             modalContentGrid.innerHTML = `
                 <div class="modal-item">
                     <div class="label">Process Name</div>
-                    <div class="val">${escapeHtml(proc.name)}</div>
+                    <div class="val">${escapeHtml(proc.name)} ${!isPrivileged ? '<span style="font-size:0.75rem; color:var(--subtext-color);">(Masked)</span>' : ''}</div>
                 </div>
                 <div class="modal-item">
                     <div class="label">PM2 Instance ID</div>
-                    <div class="val">#${proc.id}</div>
+                    <div class="val">${proc.id !== null && proc.id !== undefined ? '#' + proc.id : '🔒 [LOCKED]'}</div>
                 </div>
                 <div class="modal-item">
                     <div class="label">Health Status</div>
@@ -1645,24 +1654,34 @@
                 </div>
                 <div class="modal-item">
                     <div class="label">Restarts</div>
-                    <div class="val" style="color: ${proc.restartAlert ? 'var(--alert-red)' : 'inherit'}">${proc.restarts} ${proc.restartAlert ? '(EXCESSIVE)' : ''}</div>
+                    <div class="val" style="color: ${proc.restartAlert ? 'var(--alert-red)' : 'inherit'}">
+                        ${proc.restarts !== null && proc.restarts !== undefined ? proc.restarts + (proc.restartAlert ? ' (EXCESSIVE)' : '') : '🔒 [RESTRICTED]'}
+                    </div>
                 </div>
                 <div class="modal-item">
                     <div class="label">Memory Footprint</div>
-                    <div class="val">${proc.memoryMB} MB</div>
+                    <div class="val">${proc.memoryMB !== undefined ? proc.memoryMB + ' MB' : '--'}</div>
                 </div>
                 <div class="modal-item">
                     <div class="label">CPU Usage</div>
-                    <div class="val">${proc.cpu}%</div>
+                    <div class="val">${proc.cpu !== undefined ? proc.cpu + '%' : '--'}</div>
                 </div>
                 <div class="modal-item">
                     <div class="label">Uptime</div>
-                    <div class="val">${escapeHtml(proc.uptime)}</div>
+                    <div class="val">${escapeHtml(proc.uptime || '--')}</div>
                 </div>
                 <div class="modal-item">
                     <div class="label">Execution Mode</div>
-                    <div class="val">${escapeHtml(proc.mode)} mode</div>
+                    <div class="val">${proc.mode ? escapeHtml(proc.mode) + ' mode' : '🔒 [LOCKED]'}</div>
                 </div>
+                ${!isPrivileged ? `
+                    <div class="modal-item full-width" style="border-style: dashed; opacity: 0.9;">
+                        <div class="label">Privileged Access</div>
+                        <div class="val" style="font-size: 0.85rem; color: var(--subtext-color);">
+                            🔒 Process IDs, exact service names, crash/restart history, and console logs are restricted. Authenticate via the Server Lock in the header to reveal.
+                        </div>
+                    </div>
+                ` : ''}
             `;
 
             processModal.classList.add('active');
@@ -1695,6 +1714,14 @@
                             <div class="label">Architecture / Platform</div>
                             <div class="val">${escapeHtml(lastPayload.architecture)} (${escapeHtml(lastPayload.osDetails)})</div>
                         </div>
+                        ${lastPayload.authTier !== 'privileged' ? `
+                            <div class="modal-item full-width" style="border-style: dashed; opacity: 0.9;">
+                                <div class="label">Microarchitecture Protection</div>
+                                <div class="val" style="font-size: 0.85rem; color: var(--subtext-color);">
+                                    🔒 Exact CPU model, stepping, and microcode are masked in the public tier to prevent targeted CVE reconnaissance.
+                                </div>
+                            </div>
+                        ` : ''}
                     `;
                     break;
 
@@ -1785,11 +1812,12 @@
 
                 case 'net':
                     const n = lastPayload.network || {};
+                    const isPrivNet = lastPayload.authTier === 'privileged';
                     modalTitle.innerText = `// NETWORK_TELEMETRY`;
                     modalContentGrid.innerHTML = `
                         <div class="modal-item full-width">
                             <div class="label">Primary Physical Uplink</div>
-                            <div class="val">${escapeHtml(n.interface ? n.interface.toUpperCase() : 'UNKNOWN')}</div>
+                            <div class="val">${escapeHtml(n.interface ? n.interface.toUpperCase() : 'UNKNOWN')} ${!isPrivNet ? '<span style="font-size:0.75rem; color:var(--subtext-color);">(Masked)</span>' : ''}</div>
                         </div>
                         <div class="modal-item">
                             <div class="label">Current Inbound (Download)</div>
@@ -1809,12 +1837,20 @@
                         </div>
                         <div class="modal-item">
                             <div class="label">Inbound Packets</div>
-                            <div class="val">${n.rxPackets ? n.rxPackets.toLocaleString() : '--'}</div>
+                            <div class="val">${n.rxPackets !== undefined ? n.rxPackets.toLocaleString() : '🔒 [LOCKED]'}</div>
                         </div>
                         <div class="modal-item">
                             <div class="label">Outbound Packets</div>
-                            <div class="val">${n.txPackets ? n.txPackets.toLocaleString() : '--'}</div>
+                            <div class="val">${n.txPackets !== undefined ? n.txPackets.toLocaleString() : '🔒 [LOCKED]'}</div>
                         </div>
+                        ${!isPrivNet ? `
+                            <div class="modal-item full-width" style="border-style: dashed; opacity: 0.9;">
+                                <div class="label">Hardware Topology</div>
+                                <div class="val" style="font-size: 0.85rem; color: var(--subtext-color);">
+                                    🔒 Motherboard NIC bus bindings (PCIe/ACPI) and raw packet error counters are restricted. Unlock portal to reveal.
+                                </div>
+                            </div>
+                        ` : ''}
                     `;
                     break;
 
